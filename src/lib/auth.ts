@@ -83,15 +83,27 @@ export async function getCurrentUser(token: string): Promise<AuthMeResponse> {
 }
 
 export function saveSession(response: LoginResponse) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
   localStorage.setItem(TOKEN_KEY, response.accessToken);
   localStorage.setItem(USER_KEY, JSON.stringify(response.user));
 }
 
 export function getStoredToken() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
   return localStorage.getItem(TOKEN_KEY);
 }
 
 export function getStoredUser(): AuthUser | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
   const rawUser = localStorage.getItem(USER_KEY);
 
   if (!rawUser) {
@@ -107,6 +119,10 @@ export function getStoredUser(): AuthUser | null {
 }
 
 export function clearSession() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
 }
