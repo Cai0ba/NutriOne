@@ -1,0 +1,128 @@
+export type UserRole = "client" | "nutritionist";
+
+export type AuthUser = {
+  id: string;
+  nome: string;
+  email: string;
+  role: UserRole;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type LoginPayload = {
+  email: string;
+  senha: string;
+};
+
+export type LoginResponse = {
+  accessToken: string;
+  user: AuthUser;
+};
+
+export type AuthMeResponse = {
+  sub: string;
+  email: string;
+  role: UserRole;
+};
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+const TOKEN_KEY = "nutriconnect.accessToken";
+const USER_KEY = "nutriconnect.user";
+
+type ApiErrorBody = {
+  message?: string | string[];
+  error?: string;
+};
+
+async function request<TResponse>(
+  path: string,
+  init?: RequestInit,
+): Promise<TResponse> {
+  const response = await fetch(`${API_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...init?.headers,
+    },
+  });
+
+  if (!response.ok) {
+    let errorBody: ApiErrorBody = {};
+
+    try {
+      errorBody = (await response.json()) as ApiErrorBody;
+    } catch {
+      errorBody = {};
+    }
+
+    const rawMessage = errorBody.message;
+    const message = Array.isArray(rawMessage)
+      ? rawMessage.join(", ")
+      : rawMessage ?? "Não foi possível concluir a solicitação.";
+
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<TResponse>;
+}
+
+export async function login(payload: LoginPayload): Promise<LoginResponse> {
+  return request<LoginResponse>("/auth/login", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getCurrentUser(token: string): Promise<AuthMeResponse> {
+  return request<AuthMeResponse>("/auth/me", {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function saveSession(response: LoginResponse) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  localStorage.setItem(TOKEN_KEY, response.accessToken);
+  localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+}
+
+export function getStoredToken() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function getStoredUser(): AuthUser | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const rawUser = localStorage.getItem(USER_KEY);
+
+  if (!rawUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawUser) as AuthUser;
+  } catch {
+    clearSession();
+    return null;
+  }
+}
+
+export function clearSession() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
+}
