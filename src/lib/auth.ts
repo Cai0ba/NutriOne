@@ -1,10 +1,13 @@
-export type UserRole = "client" | "nutritionist";
+export type UserRole = "client" | "nutritionist" | "admin";
 
 export type AuthUser = {
   id: string;
   nome: string;
   email: string;
+  cpf?: string;
+  dataNascimento?: string;
   role: UserRole;
+  mustChangePassword?: boolean;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -23,6 +26,28 @@ export type AuthMeResponse = {
   sub: string;
   email: string;
   role: UserRole;
+  mustChangePassword?: boolean;
+};
+
+export type RegisterUserPayload = {
+  nome: string;
+  email: string;
+  cpf: string;
+  dataNascimento: string;
+  role: UserRole;
+};
+
+export type RegisterUserResponse = {
+  user: AuthUser;
+};
+
+export type ChangePasswordPayload = {
+  senhaAtual: string;
+  novaSenha: string;
+};
+
+export type ChangePasswordResponse = {
+  user: AuthUser;
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
@@ -38,13 +63,22 @@ async function request<TResponse>(
   path: string,
   init?: RequestInit,
 ): Promise<TResponse> {
-  const response = await fetch(`${API_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(`${API_URL}${path}`, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...init?.headers,
+      },
+    });
+  } catch (error) {
+    throw new Error(
+      `Nao foi possivel conectar na API em ${API_URL}. Verifique se o backend esta rodando e se a URL usa http://localhost:3000 em desenvolvimento.`,
+      { cause: error },
+    );
+  }
 
   if (!response.ok) {
     let errorBody: ApiErrorBody = {};
@@ -82,6 +116,32 @@ export async function getCurrentUser(token: string): Promise<AuthMeResponse> {
   });
 }
 
+export async function registerUser(
+  token: string,
+  payload: RegisterUserPayload,
+): Promise<RegisterUserResponse> {
+  return request<RegisterUserResponse>("/auth/register", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function changePassword(
+  token: string,
+  payload: ChangePasswordPayload,
+): Promise<ChangePasswordResponse> {
+  return request<ChangePasswordResponse>("/auth/change-password", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
 export function saveSession(response: LoginResponse) {
   if (typeof window === "undefined") {
     return;
@@ -116,6 +176,26 @@ export function getStoredUser(): AuthUser | null {
     clearSession();
     return null;
   }
+}
+
+export function updateStoredUser(user: AuthUser) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+}
+
+export function getDashboardPathByRole(role: UserRole) {
+  if (role === "admin") {
+    return "/admin/dashboard";
+  }
+
+  if (role === "nutritionist") {
+    return "/nutritionist/dashboard";
+  }
+
+  return "/home";
 }
 
 export function clearSession() {

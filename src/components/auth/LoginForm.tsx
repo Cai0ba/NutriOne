@@ -18,7 +18,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { login, saveSession, type UserRole } from "@/lib/auth";
+import {
+  getDashboardPathByRole,
+  login,
+  saveSession,
+  type UserRole,
+} from "@/lib/auth";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Informe um email válido."),
@@ -50,6 +55,13 @@ const tabs: LoginTab[] = [
     title: "Nutritionist Login",
     subtitle: "Manage patients, plans and nutrition progress",
     submitLabel: "Sign In as Nutritionist",
+  },
+  {
+    label: "Admin",
+    role: "admin",
+    title: "Admin Login",
+    subtitle: "Manage users, roles and platform access",
+    submitLabel: "Sign In as Admin",
   },
 ];
 
@@ -83,16 +95,16 @@ export function LoginForm() {
 
       if (response.user.role !== activeLogin.role) {
         const expectedRole =
-          activeLogin.role === "client" ? "paciente" : "nutricionista";
+          activeLogin.role === "client"
+            ? "paciente"
+            : activeLogin.role === "nutritionist"
+              ? "nutricionista"
+              : "administrador";
         throw new Error(`Esta conta não pertence ao perfil de ${expectedRole}.`);
       }
 
       saveSession(response);
-      router.replace(
-        response.user.role === "nutritionist"
-          ? "/nutritionist/dashboard"
-          : "/home",
-      );
+      router.replace(getDashboardPathByRole(response.user.role));
     } catch (error) {
       setFormError(
         error instanceof Error

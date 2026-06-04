@@ -5,7 +5,7 @@ import { HomeDashboard } from "@/components/home/HomeDashboard";
 
 export default function HomePage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute allowedRoles={["client"]}>
       {(session) => <HomeDashboard session={session} />}
     </ProtectedRoute>
   );

@@ -5,9 +5,18 @@ import Button from "@mui/material/Button";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 import { UserPlus } from "lucide-react";
+import { useState } from "react";
+import type { AuthMeResponse } from "@/lib/auth";
 import { DashboardLayout } from "./DashboardLayout";
+import { UserRegistrationModal } from "./UserRegistrationModal";
 
-export function NutritionistDashboard() {
+type NutritionistDashboardProps = {
+  session: AuthMeResponse;
+};
+
+export function NutritionistDashboard({ session }: NutritionistDashboardProps) {
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+
   return (
     <DashboardLayout userName="Dr. Sarah">
       <Box sx={{ px: { xs: 3, md: 5 }, py: { xs: 4, md: 5 } }}>
@@ -91,6 +100,7 @@ export function NutritionistDashboard() {
               color="primary"
               size="large"
               startIcon={<UserPlus size={18} />}
+              onClick={() => setIsRegistrationOpen(true)}
               sx={{
                 px: 2.5,
                 py: 1.2,
@@ -107,6 +117,11 @@ export function NutritionistDashboard() {
           </Paper>
         </Box>
       </Box>
+      <UserRegistrationModal
+        open={isRegistrationOpen}
+        creatorRole={session.role}
+        onClose={() => setIsRegistrationOpen(false)}
+      />
     </DashboardLayout>
   );
 }
