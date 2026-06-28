@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getStoredToken } from "@/lib/auth";
 import type { MealPlanDetail, MealPlanStatus, Meal } from "@/lib/diet";
 import { getSelfMealPlan } from "@/lib/patient-self";
+import { MealPlanDownloadButton } from "./MealPlanDownloadButton";
 import { PatientLayout } from "./PatientLayout";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -229,6 +230,9 @@ export function MealPlanViewer({ planId }: { planId: string }) {
                   </Paper>
                 )}
               </Box>
+
+              {/* Botão de download */}
+              <MealPlanDownloadButton plan={plan} />
             </Box>
 
             {/* Refeições */}
