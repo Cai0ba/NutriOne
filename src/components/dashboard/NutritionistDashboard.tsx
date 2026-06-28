@@ -15,8 +15,9 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { Eye, Pencil, UserPlus } from "lucide-react";
+import { BarChart2, Eye, Pencil, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   getMyPatients,
   getStoredToken,
@@ -46,6 +47,7 @@ function formatDate(iso?: string) {
 }
 
 export function NutritionistDashboard({ session }: NutritionistDashboardProps) {
+  const router = useRouter();
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [profileModalMode, setProfileModalMode] = useState<"view" | "edit">("view");
@@ -253,6 +255,15 @@ export function NutritionistDashboard({ session }: NutritionistDashboardProps) {
                     </TableCell>
                     <TableCell align="right">
                       <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end" }}>
+                        <Tooltip title="Ver evolução">
+                          <IconButton
+                            size="small"
+                            onClick={() => router.push(`/nutritionist/patients/${patient.id}`)}
+                            sx={{ color: "#8b5cf6" }}
+                          >
+                            <BarChart2 size={17} />
+                          </IconButton>
+                        </Tooltip>
                         <Tooltip title="Ver ficha">
                           <IconButton
                             size="small"

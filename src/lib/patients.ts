@@ -134,6 +134,16 @@ export async function createAssessment(
   );
 }
 
+export async function listAssessments(
+  token: string,
+  patientId: string,
+): Promise<PhysicalAssessment[]> {
+  return request<PhysicalAssessment[]>(
+    `/patients/${patientId}/assessments`,
+    token,
+  );
+}
+
 export async function updateAssessment(
   token: string,
   patientId: string,
