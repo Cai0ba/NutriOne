@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -18,6 +17,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { getStoredToken } from "@/lib/auth";
 import { updateAssessment, type PhysicalAssessment } from "@/lib/patients";
+import { toast } from "sonner";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -83,8 +83,6 @@ type EditAssessmentModalProps = {
 export function EditAssessmentModal({
   open, assessment, patientId, patientName, onClose, onUpdated,
 }: EditAssessmentModalProps) {
-  const [saveError, setSaveError] = useState<string | null>(null);
-
   const { control, handleSubmit, formState: { isSubmitting } } =
     useForm<EditFormValues>({
       resolver: zodResolver(editSchema),
@@ -104,7 +102,6 @@ export function EditAssessmentModal({
   const imcCls     = imcPreview ? imcClass(parseFloat(imcPreview)) : null;
 
   const onSubmit = async (values: EditFormValues) => {
-    setSaveError(null);
     const token = getStoredToken();
     if (!token) return;
     try {
@@ -116,9 +113,11 @@ export function EditAssessmentModal({
         circunferencia:  toN(values.circunferencia),
         observacoes:     values.observacoes || undefined,
       });
+      toast.success("Avaliação atualizada com sucesso!");
       onUpdated(updated);
+      onClose();
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Erro ao salvar.");
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar a avaliação.");
     }
   };
 
@@ -135,10 +134,6 @@ export function EditAssessmentModal({
 
       <DialogContent sx={{ px: 3, pt: 1.5 }}>
         <Box component="form" id="edit-assessment-form" onSubmit={handleSubmit(onSubmit)} noValidate>
-          {saveError && (
-            <Alert severity="error" sx={{ mb: 2, borderRadius: 1 }}>{saveError}</Alert>
-          )}
-
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "1fr 1fr 1fr" }, gap: 2, mb: 2 }}>
             <Controller name="peso" control={control}
               render={({ field, fieldState }) => (

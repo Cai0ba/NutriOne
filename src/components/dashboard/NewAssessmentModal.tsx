@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -18,6 +17,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import { getStoredToken } from "@/lib/auth";
 import { createAssessment, type PhysicalAssessment } from "@/lib/patients";
+import { toast } from "sonner";
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -89,8 +89,6 @@ export function NewAssessmentModal({
   onClose,
   onCreated,
 }: NewAssessmentModalProps) {
-  const [saveError, setSaveError] = useState<string | null>(null);
-
   const { control, handleSubmit, reset, formState: { isSubmitting } } =
     useForm<FormValues>({
       resolver: zodResolver(schema),
@@ -105,13 +103,11 @@ export function NewAssessmentModal({
   const imcPreview = useMemo(() => calcImc(pesoVal, alturaVal), [pesoVal, alturaVal]);
 
   const handleClose = () => {
-    setSaveError(null);
     reset();
     onClose();
   };
 
   const onSubmit = async (values: FormValues) => {
-    setSaveError(null);
     const token = getStoredToken();
     if (!token) return;
 
@@ -124,12 +120,11 @@ export function NewAssessmentModal({
         circunferencia:  toNum(values.circunferencia),
         observacoes:     values.observacoes || undefined,
       });
+      toast.success("Avaliação registrada com sucesso!");
       onCreated(created);
       handleClose();
     } catch (err) {
-      setSaveError(
-        err instanceof Error ? err.message : "Não foi possível salvar a avaliação.",
-      );
+      toast.error(err instanceof Error ? err.message : "Não foi possível salvar a avaliação.");
     }
   };
 
@@ -151,12 +146,6 @@ export function NewAssessmentModal({
           onSubmit={handleSubmit(onSubmit)}
           noValidate
         >
-          {saveError && (
-            <Alert severity="error" sx={{ mb: 2, borderRadius: 1 }}>
-              {saveError}
-            </Alert>
-          )}
-
           {/* Peso + Altura + IMC */}
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr 1fr", sm: "1fr 1fr 1fr" }, gap: 2, mb: 2 }}>
             <Controller name="peso" control={control}

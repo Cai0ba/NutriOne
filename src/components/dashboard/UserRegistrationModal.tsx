@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
@@ -26,6 +25,7 @@ import {
   type Patient,
   type UserRole,
 } from "@/lib/auth";
+import { toast } from "sonner";
 import {
   birthDateToIsoDate,
   formatBirthDate,
@@ -71,9 +71,6 @@ export function UserRegistrationModal({
   onClose,
   onCreated,
 }: UserRegistrationModalProps) {
-  const [formError, setFormError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
   const roleOptions = useMemo<RoleOption[]>(() => {
     return [{ value: "client", label: roleLabels.client }];
   }, [creatorRole]);
@@ -102,8 +99,6 @@ export function UserRegistrationModal({
   }, [roleOptions, setValue]);
 
   const handleClose = () => {
-    setFormError(null);
-    setSuccessMessage(null);
     reset({
       nome: "",
       email: "",
@@ -115,18 +110,15 @@ export function UserRegistrationModal({
   };
 
   const onSubmit = async (values: UserRegistrationValues) => {
-    setFormError(null);
-    setSuccessMessage(null);
-
     const token = getStoredToken();
 
     if (!token) {
-      setFormError("Sessao expirada. Faca login novamente.");
+      toast.error("Sessão expirada. Faça login novamente.");
       return;
     }
 
     if (!roleOptions.some((option) => option.value === values.role)) {
-      setFormError("Voce nao tem permissao para criar este tipo de usuario.");
+      toast.error("Você não tem permissão para criar este tipo de usuário.");
       return;
     }
 
@@ -139,22 +131,14 @@ export function UserRegistrationModal({
         role: values.role,
       });
 
-      setSuccessMessage(
-        `${roleLabels[response.user.role]} criado com senha temporaria trocar1234.`,
-      );
+      toast.success(`Paciente criado! Senha temporária: trocar1234`);
       onCreated?.(response.user);
-      reset({
-        nome: "",
-        email: "",
-        cpf: "",
-        dataNascimento: "",
-        role: roleOptions[0].value,
-      });
+      handleClose();
     } catch (error) {
-      setFormError(
+      toast.error(
         error instanceof Error
           ? error.message
-          : "Nao foi possivel criar o usuario agora.",
+          : "Não foi possível criar o usuário agora.",
       );
     }
   };
@@ -172,18 +156,6 @@ export function UserRegistrationModal({
 
       <DialogContent sx={{ px: 3, pt: 2 }}>
         <Box component="form" id="user-registration-form" onSubmit={handleSubmit(onSubmit)} noValidate>
-          {formError ? (
-            <Alert severity="error" sx={{ mb: 2, borderRadius: 1 }}>
-              {formError}
-            </Alert>
-          ) : null}
-
-          {successMessage ? (
-            <Alert severity="success" sx={{ mb: 2, borderRadius: 1 }}>
-              {successMessage}
-            </Alert>
-          ) : null}
-
           <Controller
             name="nome"
             control={control}

@@ -28,6 +28,7 @@ import {
   type MealPlanStatus,
   type SaveMealPlanPayload,
 } from "@/lib/diet";
+import { toast } from "sonner";
 import { DashboardLayout } from "../dashboard/DashboardLayout";
 import { MealCard } from "./MealCard";
 
@@ -103,10 +104,8 @@ type DietPlanBuilderProps = {
 export function DietPlanBuilder({ patient, planId }: DietPlanBuilderProps) {
   const router  = useRouter();
   const isEdit  = Boolean(planId);
-  const [loadError,  setLoadError]  = useState<string | null>(null);
-  const [saveError,  setSaveError]  = useState<string | null>(null);
-  const [saveOk,     setSaveOk]     = useState(false);
-  const [loadingPlan,setLoadingPlan]= useState(isEdit);
+  const [loadError,   setLoadError]   = useState<string | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState(isEdit);
 
   const methods = useForm<DietFormValues>({
     resolver: zodResolver(planSchema),
@@ -139,8 +138,6 @@ export function DietPlanBuilder({ patient, planId }: DietPlanBuilderProps) {
   }, [planId, patient.id, reset]);
 
   const onSubmit = async (values: DietFormValues) => {
-    setSaveError(null);
-    setSaveOk(false);
     const token = getStoredToken();
     if (!token) return;
 
@@ -172,10 +169,9 @@ export function DietPlanBuilder({ patient, planId }: DietPlanBuilderProps) {
         router.replace(`/nutritionist/patients/${patient.id}/diet/${created._id}`);
         return;
       }
-      setSaveOk(true);
-      setTimeout(() => setSaveOk(false), 3000);
+      toast.success("Plano salvo com sucesso!");
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Erro ao salvar.");
+      toast.error(err instanceof Error ? err.message : "Erro ao salvar o plano.");
     }
   };
 
@@ -271,17 +267,6 @@ export function DietPlanBuilder({ patient, planId }: DietPlanBuilderProps) {
               <Alert severity="error">{loadError}</Alert>
             ) : (
               <>
-                {/* Feedback de salvo */}
-                {saveOk && (
-                  <Alert severity="success" sx={{ mb: 2, borderRadius: 1 }}>
-                    Plano salvo com sucesso!
-                  </Alert>
-                )}
-                {saveError && (
-                  <Alert severity="error" sx={{ mb: 2, borderRadius: 1 }}>
-                    {saveError}
-                  </Alert>
-                )}
                 {errors.refeicoes?.root?.message && (
                   <Alert severity="warning" sx={{ mb: 2, borderRadius: 1 }}>
                     {errors.refeicoes.root.message}

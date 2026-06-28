@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Accordion from "@mui/material/Accordion";
 import AccordionDetails from "@mui/material/AccordionDetails";
 import AccordionSummary from "@mui/material/AccordionSummary";
-import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Chip from "@mui/material/Chip";
@@ -35,6 +34,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import type { Patient } from "@/lib/auth";
 import { getStoredToken } from "@/lib/auth";
+import { toast } from "sonner";
 import {
   createAssessment,
   getLatestAssessment,
@@ -583,7 +583,6 @@ export function PatientProfileModal({
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [assessment, setAssessment] = useState<PhysicalAssessment | null>(null);
   const [loading, setLoading] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Form: ficha
   const profileForm = useForm<ProfileFormValues>({
@@ -615,7 +614,6 @@ export function PatientProfileModal({
     if (!open || !patient) return;
 
     setMode(initialMode);
-    setSaveError(null);
     setLoading(true);
 
     const token = getStoredToken();
@@ -667,12 +665,10 @@ export function PatientProfileModal({
 
   const handleClose = () => {
     setMode("view");
-    setSaveError(null);
     onClose();
   };
 
   const handleSave = async () => {
-    setSaveError(null);
     const token = getStoredToken();
     if (!token || !patient) return;
 
@@ -717,9 +713,10 @@ export function PatientProfileModal({
 
       setProfile(savedProfile);
       setAssessment(savedAssessment);
+      toast.success("Dados do paciente salvos com sucesso!");
       setMode("view");
     } catch (error) {
-      setSaveError(
+      toast.error(
         error instanceof Error
           ? error.message
           : "Não foi possível salvar os dados.",
@@ -864,11 +861,6 @@ export function PatientProfileModal({
           </>
         ) : (
           <>
-            {saveError && (
-              <Alert severity="error" sx={{ mb: 2, borderRadius: 1 }}>
-                {saveError}
-              </Alert>
-            )}
 
             {/* ── Dados Pessoais (edit) ── */}
             <AccordionSection
@@ -1107,7 +1099,6 @@ export function PatientProfileModal({
           <>
             <Button
               onClick={() => {
-                setSaveError(null);
                 setMode("view");
               }}
               color="inherit"

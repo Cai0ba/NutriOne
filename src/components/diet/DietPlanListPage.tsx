@@ -12,8 +12,10 @@ import Typography from "@mui/material/Typography";
 import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { getStoredToken, type Patient } from "@/lib/auth";
 import { deleteMealPlan, listMealPlans, type MealPlanStatus, type MealPlanSummary } from "@/lib/diet";
+import { ConfirmDialog } from "../common/ConfirmDialog";
 import { DashboardLayout } from "../dashboard/DashboardLayout";
 
 // ─── Status chip ──────────────────────────────────────────────────────────────
@@ -46,31 +48,34 @@ function PlanRow({
   patientId: string;
   onDeleted: (id: string) => void;
 }) {
-  const router    = useRouter();
-  const [deleting, setDeleting] = useState(false);
+  const router = useRouter();
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleEdit = () =>
     router.push(`/nutritionist/patients/${patientId}/diet/${plan._id}`);
 
   const handleDelete = async () => {
-    if (!confirm(`Excluir o plano "${plan.nome}"? Esta ação não pode ser desfeita.`)) return;
-    setDeleting(true);
     const token = getStoredToken();
     if (!token) return;
-    try {
-      await deleteMealPlan(token, patientId, plan._id);
-      onDeleted(plan._id);
-    } catch {
-      alert("Não foi possível excluir o plano.");
-    } finally {
-      setDeleting(false);
-    }
+    await deleteMealPlan(token, patientId, plan._id);
+    toast.success(`Plano "${plan.nome}" excluído.`);
+    onDeleted(plan._id);
   };
 
   const fmtDate = (iso?: string) =>
     iso ? new Date(iso).toLocaleDateString("pt-BR") : "—";
 
   return (
+    <>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Excluir plano alimentar"
+        description={`Tem certeza que deseja excluir o plano "${plan.nome}"? Esta ação não pode ser desfeita.`}
+        confirmLabel="Excluir"
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     <Box
       sx={{
         display: "grid",
@@ -115,15 +120,15 @@ function PlanRow({
         <Tooltip title="Excluir plano">
           <IconButton
             size="small"
-            onClick={handleDelete}
-            disabled={deleting}
+            onClick={() => setConfirmOpen(true)}
             sx={{ color: "#ef4444" }}
           >
-            {deleting ? <CircularProgress size={14} /> : <Trash2 size={15} />}
+            <Trash2 size={15} />
           </IconButton>
         </Tooltip>
       </Box>
     </Box>
+    </>
   );
 }
 
