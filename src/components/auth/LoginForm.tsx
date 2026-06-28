@@ -56,13 +56,6 @@ const tabs: LoginTab[] = [
     subtitle: "Manage patients, plans and nutrition progress",
     submitLabel: "Sign In as Nutritionist",
   },
-  {
-    label: "Admin",
-    role: "admin",
-    title: "Admin Login",
-    subtitle: "Manage users, roles and platform access",
-    submitLabel: "Sign In as Admin",
-  },
 ];
 
 export function LoginForm() {
@@ -95,11 +88,7 @@ export function LoginForm() {
 
       if (response.user.role !== activeLogin.role) {
         const expectedRole =
-          activeLogin.role === "client"
-            ? "paciente"
-            : activeLogin.role === "nutritionist"
-              ? "nutricionista"
-              : "administrador";
+          activeLogin.role === "client" ? "paciente" : "nutricionista";
         throw new Error(`Esta conta não pertence ao perfil de ${expectedRole}.`);
       }
 

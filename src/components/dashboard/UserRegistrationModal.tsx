@@ -23,7 +23,7 @@ import { z } from "zod";
 import {
   getStoredToken,
   registerUser,
-  type AuthUser,
+  type Patient,
   type UserRole,
 } from "@/lib/auth";
 import {
@@ -43,7 +43,7 @@ const userRegistrationSchema = z.object({
   dataNascimento: z
     .string()
     .refine(isValidBirthDate, "Informe uma data valida no formato DD/MM/AAAA."),
-  role: z.enum(["client", "nutritionist", "admin"]),
+  role: z.enum(["client", "nutritionist"]),
 });
 
 type UserRegistrationValues = z.infer<typeof userRegistrationSchema>;
@@ -57,13 +57,12 @@ type UserRegistrationModalProps = {
   open: boolean;
   creatorRole: UserRole;
   onClose: () => void;
-  onCreated?: (user: AuthUser) => void;
+  onCreated?: (user: Patient) => void;
 };
 
 const roleLabels: Record<UserRole, string> = {
   client: "Patient",
   nutritionist: "Nutritionist",
-  admin: "Admin",
 };
 
 export function UserRegistrationModal({
@@ -76,14 +75,6 @@ export function UserRegistrationModal({
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const roleOptions = useMemo<RoleOption[]>(() => {
-    if (creatorRole === "admin") {
-      return [
-        { value: "client", label: roleLabels.client },
-        { value: "nutritionist", label: roleLabels.nutritionist },
-        { value: "admin", label: roleLabels.admin },
-      ];
-    }
-
     return [{ value: "client", label: roleLabels.client }];
   }, [creatorRole]);
 

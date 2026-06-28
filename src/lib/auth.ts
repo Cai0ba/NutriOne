@@ -1,4 +1,4 @@
-export type UserRole = "client" | "nutritionist" | "admin";
+export type UserRole = "client" | "nutritionist";
 
 export type AuthUser = {
   id: string;
@@ -186,11 +186,26 @@ export function updateStoredUser(user: AuthUser) {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
-export function getDashboardPathByRole(role: UserRole) {
-  if (role === "admin") {
-    return "/admin/dashboard";
-  }
+export type Patient = {
+  id: string;
+  nome: string;
+  email: string;
+  cpf?: string;
+  dataNascimento?: string;
+  role: UserRole;
+  mustChangePassword?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+};
 
+export async function getMyPatients(token: string): Promise<{ patients: Patient[] }> {
+  return request<{ patients: Patient[] }>("/auth/my-patients", {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export function getDashboardPathByRole(role: UserRole) {
   if (role === "nutritionist") {
     return "/nutritionist/dashboard";
   }
