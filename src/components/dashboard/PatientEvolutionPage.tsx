@@ -15,7 +15,7 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { ArrowLeft, Pencil, Plus } from "lucide-react";
+import { ArrowLeft, Pencil, Plus, Utensils } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { MetricLineChart, type ChartDataPoint } from "@/components/charts/MetricLineChart";
@@ -156,6 +156,15 @@ export function PatientEvolutionPage({ patient }: PatientEvolutionPageProps) {
               Evolução física · {assessments.length} avaliação{assessments.length !== 1 ? "ões" : ""}
             </Typography>
           </Box>
+
+          <Button
+            variant="outlined"
+            startIcon={<Utensils size={16} />}
+            onClick={() => router.push(`/nutritionist/patients/${patient.id}/diet`)}
+            sx={{ borderRadius: 1, fontWeight: 700, color: "#6366f1", borderColor: "#6366f1", "&:hover": { borderColor: "#4f46e5", bgcolor: "#eef2ff" } }}
+          >
+            Plano Alimentar
+          </Button>
 
           <Button
             variant="contained" color="primary"
