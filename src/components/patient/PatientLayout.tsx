@@ -9,7 +9,7 @@ import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { BarChart3, Leaf, LogOut, Salad, type LucideIcon } from "lucide-react";
+import { BarChart3, CalendarDays, Leaf, LogOut, Salad, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
@@ -24,9 +24,10 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Início",   icon: Leaf,     href: "/home"           },
-  { label: "Evolução", icon: BarChart3, href: "/home/evolution" },
-  { label: "Dieta",    icon: Salad,     href: "/home/diet"      },
+  { label: "Início",   icon: Leaf,         href: "/home"                },
+  { label: "Evolução", icon: BarChart3,     href: "/home/evolution"      },
+  { label: "Dieta",    icon: Salad,         href: "/home/diet"           },
+  { label: "Agenda",   icon: CalendarDays,  href: "/home/appointments"   },
 ];
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
