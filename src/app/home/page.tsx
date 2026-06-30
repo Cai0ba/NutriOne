@@ -1,12 +1,12 @@
 "use client";
 
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { HomeDashboard } from "@/components/home/HomeDashboard";
+import { PatientDashboard } from "@/components/patient/PatientDashboard";
 
 export default function HomePage() {
   return (
-    <ProtectedRoute>
-      {(session) => <HomeDashboard session={session} />}
+    <ProtectedRoute allowedRoles={["client"]}>
+      {() => <PatientDashboard />}
     </ProtectedRoute>
   );
 }

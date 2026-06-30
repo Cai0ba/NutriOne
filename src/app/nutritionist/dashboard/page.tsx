@@ -8,11 +8,8 @@ const allowedRoles: AuthMeResponse["role"][] = ["nutritionist"];
 
 export default function NutritionistDashboardPage() {
   return (
-    <ProtectedRoute
-      allowedRoles={allowedRoles}
-      unauthorizedRedirectTo="/home"
-    >
-      {() => <NutritionistDashboard />}
+    <ProtectedRoute allowedRoles={allowedRoles}>
+      {(session) => <NutritionistDashboard session={session} />}
     </ProtectedRoute>
   );
 }
