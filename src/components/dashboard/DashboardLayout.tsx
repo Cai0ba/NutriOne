@@ -10,7 +10,6 @@ import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import {
-  BarChart3,
   CalendarDays,
   Leaf,
   LogOut,
@@ -33,7 +32,6 @@ type NavItem = {
 const NAV_ITEMS: NavItem[] = [
   { label: "Pacientes", icon: UsersRound,   href: "/nutritionist/dashboard"    },
   { label: "Agenda",    icon: CalendarDays,  href: "/nutritionist/appointments" },
-  { label: "Relatórios",icon: BarChart3,     href: "/nutritionist/analytics"    },
 ];
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
