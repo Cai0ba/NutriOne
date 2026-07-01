@@ -224,7 +224,8 @@ const s = StyleSheet.create({
 
 function fmtDate(iso?: string) {
   if (!iso) return null;
-  return new Date(iso).toLocaleDateString("pt-BR");
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? null : d.toLocaleDateString("pt-BR");
 }
 
 function todayStr() {

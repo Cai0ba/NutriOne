@@ -61,10 +61,11 @@ function imcClass(imc: number): { label: string; color: string } {
   return                  { label: "Obesidade grau III", color: "#7f1d1d" };
 }
 
-function formatDateFull(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-BR", {
-    day: "2-digit", month: "long", year: "numeric",
-  });
+function formatDateFull(iso?: string) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────

@@ -110,7 +110,8 @@ function imcClassification(imc: number): { label: string; color: string } {
 
 function formatDate(iso?: string) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("pt-BR");
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("pt-BR");
 }
 
 // ─── Subcomponentes ──────────────────────────────────────────────────────────
