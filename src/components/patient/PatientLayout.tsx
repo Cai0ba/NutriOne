@@ -9,11 +9,12 @@ import Stack from "@mui/material/Stack";
 import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
-import { BarChart3, CalendarDays, Leaf, LogOut, Salad, type LucideIcon } from "lucide-react";
+import { BarChart3, CalendarDays, Leaf, LogOut, MessageCircle, Salad, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { clearSession, getStoredUser } from "@/lib/auth";
+import { useUnreadMessages } from "@/lib/useUnreadMessages";
 
 const DRAWER_WIDTH = 240;
 
@@ -24,13 +25,14 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Início",   icon: Leaf,         href: "/home"                },
-  { label: "Evolução", icon: BarChart3,     href: "/home/evolution"      },
-  { label: "Dieta",    icon: Salad,         href: "/home/diet"           },
-  { label: "Agenda",   icon: CalendarDays,  href: "/home/appointments"   },
+  { label: "Início",    icon: Leaf,          href: "/home"               },
+  { label: "Evolução",  icon: BarChart3,     href: "/home/evolution"     },
+  { label: "Dieta",     icon: Salad,         href: "/home/diet"          },
+  { label: "Agenda",    icon: CalendarDays,  href: "/home/appointments"  },
+  { label: "Mensagens", icon: MessageCircle, href: "/home/messages"      },
 ];
 
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+function NavLink({ item, active, badge }: { item: NavItem; active: boolean; badge?: number }) {
   const Icon = item.icon;
   return (
     <Box
@@ -52,9 +54,20 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       }}
     >
       <Icon aria-hidden size={20} strokeWidth={2.2} />
-      <Typography component="span" sx={{ fontSize: 15, fontWeight: "inherit" }}>
+      <Typography component="span" sx={{ fontSize: 15, fontWeight: "inherit", flex: 1 }}>
         {item.label}
       </Typography>
+      {Boolean(badge) && (
+        <Box
+          sx={{
+            minWidth: 20, height: 20, px: 0.5, borderRadius: 10,
+            bgcolor: "#ef4444", color: "#fff", fontSize: 11, fontWeight: 800,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          {badge}
+        </Box>
+      )}
     </Box>
   );
 }
@@ -63,6 +76,7 @@ export function PatientLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router   = useRouter();
   const user     = getStoredUser();
+  const unread   = useUnreadMessages("client");
 
   const initials = (user?.nome ?? "P")
     .split(" ")
@@ -120,6 +134,7 @@ export function PatientLayout({ children }: { children: ReactNode }) {
                   ? pathname === "/home"
                   : pathname.startsWith(item.href)
               }
+              badge={item.href === "/home/messages" ? unread : undefined}
             />
           ))}
         </Stack>

@@ -13,6 +13,7 @@ import {
   CalendarDays,
   Leaf,
   LogOut,
+  MessageCircle,
   UsersRound,
   type LucideIcon,
 } from "lucide-react";
@@ -20,6 +21,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { clearSession, getStoredUser } from "@/lib/auth";
+import { useUnreadMessages } from "@/lib/useUnreadMessages";
 
 const drawerWidth = 240;
 
@@ -30,11 +32,12 @@ type NavItem = {
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Pacientes", icon: UsersRound,   href: "/nutritionist/dashboard"    },
+  { label: "Pacientes", icon: UsersRound,    href: "/nutritionist/dashboard"    },
   { label: "Agenda",    icon: CalendarDays,  href: "/nutritionist/appointments" },
+  { label: "Mensagens", icon: MessageCircle, href: "/nutritionist/messages"     },
 ];
 
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+function NavLink({ item, active, badge }: { item: NavItem; active: boolean; badge?: number }) {
   const Icon = item.icon;
   return (
     <Box
@@ -56,9 +59,20 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
       }}
     >
       <Icon aria-hidden size={20} strokeWidth={2.2} />
-      <Typography component="span" sx={{ fontSize: 15, fontWeight: "inherit" }}>
+      <Typography component="span" sx={{ fontSize: 15, fontWeight: "inherit", flex: 1 }}>
         {item.label}
       </Typography>
+      {Boolean(badge) && (
+        <Box
+          sx={{
+            minWidth: 20, height: 20, px: 0.5, borderRadius: 10,
+            bgcolor: "#ef4444", color: "#fff", fontSize: 11, fontWeight: 800,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          {badge}
+        </Box>
+      )}
     </Box>
   );
 }
@@ -72,6 +86,7 @@ export function DashboardLayout({ children, userName }: DashboardLayoutProps) {
   const pathname = usePathname();
   const router   = useRouter();
   const user     = getStoredUser();
+  const unread   = useUnreadMessages("nutritionist");
 
   const displayName = userName ?? user?.nome?.split(" ")[0] ?? "Nutricionista";
 
@@ -116,6 +131,7 @@ export function DashboardLayout({ children, userName }: DashboardLayoutProps) {
               key={item.href}
               item={item}
               active={pathname.startsWith(item.href)}
+              badge={item.href === "/nutritionist/messages" ? unread : undefined}
             />
           ))}
         </Stack>
