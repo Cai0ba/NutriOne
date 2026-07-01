@@ -9,10 +9,11 @@ import { Send } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { Message, SenderRole } from "@/lib/messages";
 
-function formatTimestamp(iso: string) {
-  return new Date(iso).toLocaleString("pt-BR", {
-    day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
-  });
+function formatTimestamp(iso?: string) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
 type ConversationPanelProps = {

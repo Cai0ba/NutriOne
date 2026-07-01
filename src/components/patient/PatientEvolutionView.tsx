@@ -27,6 +27,13 @@ function imcClass(imc: number): { label: string; color: string } {
   return               { label: "Obesidade",         color: "#ef4444" };
 }
 
+function safeDate(iso?: string, opts?: Intl.DateTimeFormatOptions) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("pt-BR", opts);
+}
+
 function toChartData(
   assessments: PhysicalAssessment[],
   key: keyof PhysicalAssessment,
@@ -35,7 +42,7 @@ function toChartData(
     .reverse()
     .filter((a) => a[key] != null)
     .map((a) => ({
-      date:  new Date(a.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }),
+      date:  safeDate(a.createdAt, { day: "2-digit", month: "short" }),
       value: a[key] as number,
     }));
 }
@@ -160,7 +167,7 @@ export function PatientEvolutionView() {
                           }}
                         >
                           <TableCell sx={{ fontWeight: idx === 0 ? 700 : 400 }}>
-                            {new Date(a.createdAt).toLocaleDateString("pt-BR")}
+                            {safeDate(a.createdAt)}
                           </TableCell>
                           <TableCell align="right">{a.peso} kg</TableCell>
                           <TableCell align="right">{a.altura} cm</TableCell>

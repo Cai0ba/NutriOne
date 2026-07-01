@@ -29,8 +29,10 @@ function fmt(n?: number, decimals = 1) {
   return n != null ? n.toFixed(decimals) : "—";
 }
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+function fmtDate(iso?: string) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
 }
 
 // ─── StatCard ─────────────────────────────────────────────────────────────────
