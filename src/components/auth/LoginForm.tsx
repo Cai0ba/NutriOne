@@ -43,18 +43,18 @@ type LoginTab = {
 
 const tabs: LoginTab[] = [
   {
-    label: "Patient",
+    label: "Paciente",
     role: "client",
-    title: "Patient Login",
-    subtitle: "Access your nutrition plan and progress",
-    submitLabel: "Sign In as Patient",
+    title: "Acesso do Paciente",
+    subtitle: "Acesse seu plano alimentar e seu progresso",
+    submitLabel: "Entrar como Paciente",
   },
   {
-    label: "Nutritionist",
+    label: "Nutricionista",
     role: "nutritionist",
-    title: "Nutritionist Login",
-    subtitle: "Manage patients, plans and nutrition progress",
-    submitLabel: "Sign In as Nutritionist",
+    title: "Acesso do Nutricionista",
+    subtitle: "Gerencie pacientes, planos e evolução nutricional",
+    submitLabel: "Entrar como Nutricionista",
   },
 ];
 
@@ -122,7 +122,7 @@ export function LoginForm() {
           setFormError(null);
         }}
         variant="fullWidth"
-        aria-label="Login profile"
+        aria-label="Perfil de acesso"
         slotProps={{ indicator: { sx: { display: "none" } } }}
         sx={{
           minHeight: 58,
@@ -178,8 +178,8 @@ export function LoginForm() {
           render={({ field }) => (
             <TextField
               {...field}
-              label="Email Address"
-              placeholder="Email Address"
+              label="E-mail"
+              placeholder="E-mail"
               type="email"
               fullWidth
               error={Boolean(errors.email)}
@@ -204,8 +204,8 @@ export function LoginForm() {
           render={({ field }) => (
             <TextField
               {...field}
-              label="Password"
-              placeholder="Password"
+              label="Senha"
+              placeholder="Senha"
               type="password"
               fullWidth
               error={Boolean(errors.senha)}
@@ -245,7 +245,7 @@ export function LoginForm() {
                     size="small"
                   />
                 }
-                label="Remember me"
+                label="Lembrar de mim"
                 sx={{
                   mr: 0,
                   "& .MuiFormControlLabel-label": {
@@ -262,7 +262,7 @@ export function LoginForm() {
             underline="none"
             sx={{ color: "primary.dark", fontSize: 14, fontWeight: 700 }}
           >
-            Forgot password?
+            Esqueceu a senha?
           </Link>
         </Box>
 
@@ -276,7 +276,7 @@ export function LoginForm() {
           startIcon={<LogIn size={20} />}
           sx={{ mt: 1.5, py: 1.45, borderRadius: 1, fontSize: 16 }}
         >
-          {isSubmitting ? "Signing in..." : activeLogin.submitLabel}
+          {isSubmitting ? "Entrando..." : activeLogin.submitLabel}
         </Button>
       </Box>
     </Card>
