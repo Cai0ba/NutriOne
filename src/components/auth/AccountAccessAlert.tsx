@@ -26,11 +26,11 @@ export function AccountAccessAlert() {
         }}
       >
         <AlertTitle sx={{ color: "#14532d", fontWeight: 800, mb: 0.25 }}>
-          Account Access
+          Acesso à Plataforma
         </AlertTitle>
         <Typography component="p" sx={{ color: "#166534", fontSize: 14 }}>
-          Only registered users can access this platform. Contact your
-          healthcare provider if you need account setup assistance.
+          Apenas usuários cadastrados podem acessar esta plataforma. Entre em
+          contato com seu nutricionista caso precise de ajuda para acessar sua conta.
         </Typography>
       </Alert>
     </Box>

@@ -98,7 +98,7 @@ export function ProtectedRoute({
       >
         <CircularProgress color="primary" />
         <Typography sx={{ color: "text.secondary", fontWeight: 700 }}>
-          Validating secure session...
+          Validando sessão...
         </Typography>
       </Box>
     );

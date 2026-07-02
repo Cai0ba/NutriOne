@@ -32,10 +32,10 @@ export function AdminDashboard({ session }: AdminDashboardProps) {
               variant="h4"
               sx={{ color: "#111827", fontWeight: 850, mb: 1 }}
             >
-              Admin dashboard
+              Painel Administrativo
             </Typography>
             <Typography sx={{ color: "#6b7280", fontSize: 16 }}>
-              Manage system users and keep the platform ready for care teams.
+              Gerencie os usuários do sistema e mantenha a plataforma pronta para as equipes de atendimento.
             </Typography>
           </Box>
 
@@ -46,7 +46,7 @@ export function AdminDashboard({ session }: AdminDashboardProps) {
             onClick={() => setIsRegistrationOpen(true)}
             sx={{ borderRadius: 1, boxShadow: "none", px: 2.5, py: 1.1 }}
           >
-            + Add User
+            + Adicionar Usuário
           </Button>
         </Stack>
 
@@ -63,10 +63,10 @@ export function AdminDashboard({ session }: AdminDashboardProps) {
           >
             <ShieldCheck size={28} color="#10b981" />
             <Typography sx={{ mt: 2, color: "#111827", fontSize: 18, fontWeight: 850 }}>
-              Protected registration
+              Cadastro protegido
             </Typography>
             <Typography sx={{ mt: 1, color: "#6b7280" }}>
-              Only admins and nutritionists can create users. New users receive the temporary password trocar1234.
+              Apenas admins e nutricionistas podem criar usuários. Novos usuários recebem a senha temporária trocar1234.
             </Typography>
           </Paper>
 
@@ -82,10 +82,10 @@ export function AdminDashboard({ session }: AdminDashboardProps) {
           >
             <UsersRound size={28} color="#10b981" />
             <Typography sx={{ mt: 2, color: "#111827", fontSize: 18, fontWeight: 850 }}>
-              User management
+              Gestão de usuários
             </Typography>
             <Typography sx={{ mt: 1, color: "#6b7280" }}>
-              This is a temporary admin area prepared for future lists, filters and permissions management.
+              Área administrativa temporária preparada para futuras listagens, filtros e gerenciamento de permissões.
             </Typography>
           </Paper>
         </Stack>

@@ -61,8 +61,8 @@ type UserRegistrationModalProps = {
 };
 
 const roleLabels: Record<UserRole, string> = {
-  client: "Patient",
-  nutritionist: "Nutritionist",
+  client: "Paciente",
+  nutritionist: "Nutricionista",
 };
 
 export function UserRegistrationModal({
@@ -147,10 +147,10 @@ export function UserRegistrationModal({
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ px: 3, pt: 3, pb: 1 }}>
         <Typography sx={{ color: "#111827", fontSize: 22, fontWeight: 850 }}>
-          Add user
+          Adicionar usuário
         </Typography>
         <Typography sx={{ color: "#6b7280", fontSize: 14, mt: 0.5 }}>
-          The initial password will be temporary: trocar1234.
+          A senha inicial será temporária: trocar1234.
         </Typography>
       </DialogTitle>
 
@@ -162,7 +162,7 @@ export function UserRegistrationModal({
             render={({ field }) => (
               <TextField
                 {...field}
-                label="Full name"
+                label="Nome completo"
                 fullWidth
                 error={Boolean(errors.nome)}
                 helperText={errors.nome?.message}
@@ -239,7 +239,7 @@ export function UserRegistrationModal({
                 <TextField
                   {...field}
                   value={field.value}
-                  label="Birth date"
+                  label="Data de nascimento"
                   placeholder="DD/MM/AAAA"
                   fullWidth
                   error={Boolean(errors.dataNascimento)}
@@ -266,11 +266,11 @@ export function UserRegistrationModal({
             control={control}
             render={({ field }) => (
               <FormControl fullWidth error={Boolean(errors.role)} sx={{ mt: 2 }}>
-                <InputLabel id="user-role-label">Role</InputLabel>
+                <InputLabel id="user-role-label">Perfil</InputLabel>
                 <Select
                   {...field}
                   labelId="user-role-label"
-                  label="Role"
+                  label="Perfil"
                   disabled={roleOptions.length === 1}
                 >
                   {roleOptions.map((option) => (
@@ -288,7 +288,7 @@ export function UserRegistrationModal({
 
       <DialogActions sx={{ px: 3, pb: 3, pt: 1 }}>
         <Button onClick={handleClose} color="inherit" sx={{ borderRadius: 1 }}>
-          Close
+          Fechar
         </Button>
         <Button
           type="submit"
@@ -298,7 +298,7 @@ export function UserRegistrationModal({
           disabled={isSubmitting}
           sx={{ borderRadius: 1, boxShadow: "none" }}
         >
-          {isSubmitting ? "Creating..." : "Create user"}
+          {isSubmitting ? "Criando..." : "Criar usuário"}
         </Button>
       </DialogActions>
     </Dialog>

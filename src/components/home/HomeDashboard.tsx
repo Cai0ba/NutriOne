@@ -67,7 +67,7 @@ export function HomeDashboard({ session }: HomeDashboardProps) {
         <Stack spacing={3}>
           <Box>
             <Chip
-              label={session.role === "client" ? "Patient portal" : "Nutritionist portal"}
+              label={session.role === "client" ? "Portal do Paciente" : "Portal do Nutricionista"}
               color="primary"
               variant="outlined"
               sx={{ mb: 1.5, fontWeight: 700 }}

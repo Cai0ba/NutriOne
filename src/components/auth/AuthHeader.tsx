@@ -54,7 +54,7 @@ export function AuthHeader() {
             component="span"
             sx={{ display: { xs: "none", sm: "inline" }, fontWeight: 700 }}
           >
-            Secure Portal
+            Portal Seguro
           </Typography>
         </Box>
       </Container>
