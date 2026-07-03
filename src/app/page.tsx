@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { LoginPage } from "@/components/auth/LoginPage";
+import { LandingPage } from "@/components/landing/LandingPage";
 
 export const metadata: Metadata = {
-  title: "Entrar — NutriOne",
+  title: "NutriOne — Plataforma para Nutricionistas e Pacientes",
   description:
-    "Acesse a plataforma NutriOne. Nutricionistas e pacientes em um só lugar: planos alimentares, avaliações físicas, consultas e muito mais.",
+    "Gerencie pacientes, planos alimentares, avaliações físicas e consultas em um só lugar. A plataforma completa para nutricionistas modernos. Comece grátis.",
   alternates: {
     canonical: "/",
   },
 };
 
 export default function Page() {
-  return <LoginPage />;
+  return <LandingPage />;
 }

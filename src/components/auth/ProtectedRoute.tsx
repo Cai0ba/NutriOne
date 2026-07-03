@@ -40,7 +40,7 @@ export function ProtectedRoute({
       const token = getStoredToken();
 
       if (!token) {
-        router.replace("/");
+        router.replace("/login");
         return;
       }
 
@@ -68,7 +68,7 @@ export function ProtectedRoute({
         }
       } catch {
         clearSession();
-        router.replace("/");
+        router.replace("/login");
       } finally {
         if (isMounted) {
           setIsChecking(false);
