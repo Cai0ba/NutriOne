@@ -137,44 +137,44 @@ export function PatientEvolutionPage({ patient }: PatientEvolutionPageProps) {
       <Box sx={{ px: { xs: 2, md: 5 }, py: { xs: 3, md: 4 } }}>
 
         {/* ── Header ── */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4, flexWrap: "wrap" }}>
-          <IconButton
-            onClick={() => router.push("/nutritionist/dashboard")}
-            sx={{ border: "1px solid #e5e7eb", borderRadius: 1.5, color: "#374151" }}
-          >
-            <ArrowLeft size={18} />
-          </IconButton>
-
-          <Avatar sx={{ width: 48, height: 48, bgcolor: "#d1fae5", color: "primary.dark", fontSize: 17, fontWeight: 800 }}>
-            {getInitials(patient.nome)}
-          </Avatar>
-
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={{ fontSize: 22, fontWeight: 850, color: "#111827", lineHeight: 1.2 }}>
-              {patient.nome}
-            </Typography>
-            <Typography sx={{ fontSize: 13, color: "#6b7280" }}>
-              Evolução física · {assessments.length} avaliação{assessments.length !== 1 ? "ões" : ""}
-            </Typography>
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+            <IconButton
+              onClick={() => router.push("/nutritionist/dashboard")}
+              sx={{ border: "1px solid #e5e7eb", borderRadius: 1.5, color: "#374151", flexShrink: 0 }}
+            >
+              <ArrowLeft size={18} />
+            </IconButton>
+            <Avatar sx={{ width: 44, height: 44, bgcolor: "#d1fae5", color: "primary.dark", fontSize: 16, fontWeight: 800, flexShrink: 0 }}>
+              {getInitials(patient.nome)}
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography noWrap sx={{ fontSize: { xs: 18, md: 22 }, fontWeight: 850, color: "#111827", lineHeight: 1.2 }}>
+                {patient.nome}
+              </Typography>
+              <Typography sx={{ fontSize: 13, color: "#6b7280" }}>
+                {assessments.length} avaliação{assessments.length !== 1 ? "ões" : ""}
+              </Typography>
+            </Box>
           </Box>
-
-          <Button
-            variant="outlined"
-            startIcon={<Utensils size={16} />}
-            onClick={() => router.push(`/nutritionist/patients/${patient.id}/diet`)}
-            sx={{ borderRadius: 1, fontWeight: 700, color: "#6366f1", borderColor: "#6366f1", "&:hover": { borderColor: "#4f46e5", bgcolor: "#eef2ff" } }}
-          >
-            Plano Alimentar
-          </Button>
-
-          <Button
-            variant="contained" color="primary"
-            startIcon={<Plus size={16} />}
-            onClick={() => setNewOpen(true)}
-            sx={{ borderRadius: 1, boxShadow: "none", fontWeight: 700 }}
-          >
-            Nova Avaliação
-          </Button>
+          <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+            <Button
+              variant="outlined"
+              startIcon={<Utensils size={16} />}
+              onClick={() => router.push(`/nutritionist/patients/${patient.id}/diet`)}
+              sx={{ borderRadius: 1, fontWeight: 700, color: "#6366f1", borderColor: "#6366f1", "&:hover": { borderColor: "#4f46e5", bgcolor: "#eef2ff" } }}
+            >
+              Plano Alimentar
+            </Button>
+            <Button
+              variant="contained" color="primary"
+              startIcon={<Plus size={16} />}
+              onClick={() => setNewOpen(true)}
+              sx={{ borderRadius: 1, boxShadow: "none", fontWeight: 700 }}
+            >
+              Nova Avaliação
+            </Button>
+          </Box>
         </Box>
 
         {loading ? (
@@ -224,13 +224,52 @@ export function PatientEvolutionPage({ patient }: PatientEvolutionPageProps) {
               </Box>
             )}
 
-            {/* ── Tabela de histórico ── */}
+            {/* ── Histórico de avaliações ── */}
             {assessments.length > 0 && (
               <>
                 <Typography sx={{ fontWeight: 700, color: "#111827", fontSize: 16, mb: 1.5 }}>
                   Histórico de Avaliações
                 </Typography>
-                <TableContainer component={Paper} elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 2 }}>
+
+                {/* MOBILE: cards */}
+                <Box sx={{ display: { xs: "flex", md: "none" }, flexDirection: "column", gap: 1.5 }}>
+                  {assessments.map((a, idx) => {
+                    const cls = imcClass(a.imc);
+                    return (
+                      <Paper key={a._id} elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 2, p: 2, bgcolor: idx === 0 ? "#f0fdf4" : "#fff" }}>
+                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.25 }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#374151" }}>
+                              {formatDateFull(a.createdAt)}
+                            </Typography>
+                            {idx === 0 && <Chip label="Atual" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 700, fontSize: 10 }} />}
+                          </Box>
+                          <IconButton size="small" sx={{ color: "#6b7280" }} onClick={() => setEditTarget(a)}>
+                            <Pencil size={15} />
+                          </IconButton>
+                        </Box>
+                        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1.25 }}>
+                          {[
+                            { label: "Peso",       value: `${a.peso} kg`  },
+                            { label: "Altura",     value: `${a.altura} cm` },
+                            { label: "IMC",        value: a.imc.toFixed(1), color: cls.color },
+                            { label: "Gordura",    value: a.gorduraCorporal != null ? `${a.gorduraCorporal}%` : "—" },
+                            { label: "Massa magra",value: a.massaMagra != null ? `${a.massaMagra} kg` : "—" },
+                            { label: "Circunf.",   value: a.circunferencia != null ? `${a.circunferencia} cm` : "—" },
+                          ].map(({ label, value, color }) => (
+                            <Box key={label}>
+                              <Typography sx={{ fontSize: 10, color: "#9ca3af", textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.4 }}>{label}</Typography>
+                              <Typography sx={{ fontSize: 15, fontWeight: 700, color: color ?? "#111827" }}>{value}</Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Paper>
+                    );
+                  })}
+                </Box>
+
+                {/* DESKTOP: tabela */}
+                <TableContainer component={Paper} elevation={0} sx={{ display: { xs: "none", md: "block" }, border: "1px solid #e5e7eb", borderRadius: 2 }}>
                   <Table size="small">
                     <TableHead>
                       <TableRow sx={{ bgcolor: "#f9fafb" }}>
@@ -247,22 +286,17 @@ export function PatientEvolutionPage({ patient }: PatientEvolutionPageProps) {
                             <TableCell sx={{ fontSize: 13 }}>
                               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                 {formatDateFull(a.createdAt)}
-                                {idx === 0 && (
-                                  <Chip label="Atual" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 700, fontSize: 10 }} />
-                                )}
+                                {idx === 0 && <Chip label="Atual" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 700, fontSize: 10 }} />}
                               </Box>
                             </TableCell>
                             <TableCell sx={{ fontSize: 13, color: "#374151" }}>{a.peso} kg</TableCell>
                             <TableCell sx={{ fontSize: 13, color: "#374151" }}>{a.altura} cm</TableCell>
                             <TableCell>
-                              <Chip
-                                label={a.imc.toFixed(1)} size="small"
-                                sx={{ bgcolor: cls.color + "22", color: cls.color, fontWeight: 700, fontSize: 12, border: `1px solid ${cls.color}44` }}
-                              />
+                              <Chip label={a.imc.toFixed(1)} size="small" sx={{ bgcolor: cls.color + "22", color: cls.color, fontWeight: 700, fontSize: 12, border: `1px solid ${cls.color}44` }} />
                             </TableCell>
                             <TableCell sx={{ fontSize: 13, color: "#374151" }}>{a.gorduraCorporal != null ? `${a.gorduraCorporal}%` : "—"}</TableCell>
-                            <TableCell sx={{ fontSize: 13, color: "#374151" }}>{a.massaMagra      != null ? `${a.massaMagra} kg`   : "—"}</TableCell>
-                            <TableCell sx={{ fontSize: 13, color: "#374151" }}>{a.circunferencia  != null ? `${a.circunferencia} cm`: "—"}</TableCell>
+                            <TableCell sx={{ fontSize: 13, color: "#374151" }}>{a.massaMagra != null ? `${a.massaMagra} kg` : "—"}</TableCell>
+                            <TableCell sx={{ fontSize: 13, color: "#374151" }}>{a.circunferencia != null ? `${a.circunferencia} cm` : "—"}</TableCell>
                             <TableCell align="right">
                               <Tooltip title="Editar avaliação">
                                 <IconButton size="small" sx={{ color: "#6b7280" }} onClick={() => setEditTarget(a)}>

@@ -135,14 +135,54 @@ export function PatientEvolutionView() {
               />
             </Box>
 
-            {/* Tabela de histórico */}
+            {/* Histórico de avaliações */}
             <Paper elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 2, overflow: "hidden" }}>
               <Box sx={{ px: 2.5, py: 1.75, borderBottom: "1px solid #f3f4f6" }}>
                 <Typography sx={{ fontSize: 15, fontWeight: 800, color: "#111827" }}>
                   Histórico de avaliações
                 </Typography>
               </Box>
-              <TableContainer>
+
+              {/* ── MOBILE: cards ── */}
+              <Box sx={{ display: { xs: "flex", md: "none" }, flexDirection: "column", gap: 0 }}>
+                {assessments.map((a, idx) => {
+                  const cls = imcClass(a.imc);
+                  return (
+                    <Box
+                      key={a._id}
+                      sx={{
+                        px: 2, py: 1.75,
+                        borderBottom: idx < assessments.length - 1 ? "1px solid #f3f4f6" : "none",
+                        bgcolor: idx === 0 ? "#f0fdf4" : "transparent",
+                      }}
+                    >
+                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
+                        <Typography sx={{ fontSize: 13, fontWeight: idx === 0 ? 700 : 500, color: "#374151" }}>
+                          {safeDate(a.createdAt)}
+                        </Typography>
+                        <Chip label={cls.label} size="small" sx={{ bgcolor: `${cls.color}18`, color: cls.color, fontWeight: 700, fontSize: 11 }} />
+                      </Box>
+                      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1 }}>
+                        {[
+                          { label: "Peso",        value: `${a.peso} kg`                                         },
+                          { label: "Altura",      value: `${a.altura} cm`                                       },
+                          { label: "IMC",         value: String(a.imc)                                          },
+                          { label: "Gordura",     value: a.gorduraCorporal != null ? `${a.gorduraCorporal}%` : "—" },
+                          { label: "Massa magra", value: a.massaMagra != null ? `${a.massaMagra} kg` : "—"      },
+                        ].map(({ label, value }) => (
+                          <Box key={label}>
+                            <Typography sx={{ fontSize: 10, color: "#9ca3af", textTransform: "uppercase", fontWeight: 700, letterSpacing: 0.4 }}>{label}</Typography>
+                            <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{value}</Typography>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+
+              {/* ── DESKTOP: tabela ── */}
+              <TableContainer sx={{ display: { xs: "none", md: "block" } }}>
                 <Table size="small">
                   <TableHead>
                     <TableRow sx={{ "& th": { bgcolor: "#f9fafb", fontSize: 12, fontWeight: 700, color: "#6b7280", textTransform: "uppercase", letterSpacing: 0.4 } }}>
@@ -159,25 +199,13 @@ export function PatientEvolutionView() {
                     {assessments.map((a, idx) => {
                       const cls = imcClass(a.imc);
                       return (
-                        <TableRow
-                          key={a._id}
-                          sx={{
-                            bgcolor: idx === 0 ? "#f0fdf4" : "inherit",
-                            "& td": { fontSize: 13, color: "#374151" },
-                          }}
-                        >
-                          <TableCell sx={{ fontWeight: idx === 0 ? 700 : 400 }}>
-                            {safeDate(a.createdAt)}
-                          </TableCell>
+                        <TableRow key={a._id} sx={{ bgcolor: idx === 0 ? "#f0fdf4" : "inherit", "& td": { fontSize: 13, color: "#374151" } }}>
+                          <TableCell sx={{ fontWeight: idx === 0 ? 700 : 400 }}>{safeDate(a.createdAt)}</TableCell>
                           <TableCell align="right">{a.peso} kg</TableCell>
                           <TableCell align="right">{a.altura} cm</TableCell>
                           <TableCell align="right" sx={{ fontWeight: 700 }}>{a.imc}</TableCell>
                           <TableCell>
-                            <Chip
-                              label={cls.label}
-                              size="small"
-                              sx={{ bgcolor: `${cls.color}18`, color: cls.color, fontWeight: 700, fontSize: 11 }}
-                            />
+                            <Chip label={cls.label} size="small" sx={{ bgcolor: `${cls.color}18`, color: cls.color, fontWeight: 700, fontSize: 11 }} />
                           </TableCell>
                           <TableCell align="right">{a.gorduraCorporal != null ? `${a.gorduraCorporal}%` : "—"}</TableCell>
                           <TableCell align="right">{a.massaMagra != null ? `${a.massaMagra} kg` : "—"}</TableCell>

@@ -189,107 +189,133 @@ export function NutritionistDashboard({ session }: NutritionistDashboardProps) {
             </Typography>
           </Paper>
         ) : (
-          <TableContainer
-            component={Paper}
-            elevation={0}
-            sx={{ border: "1px solid", borderColor: "#e5e7eb", borderRadius: 1 }}
-          >
-            <Table>
-              <TableHead>
-                <TableRow sx={{ bgcolor: "#f9fafb" }}>
-                  <TableCell sx={{ fontWeight: 700, color: "#374151" }}>Paciente</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: "#374151" }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: "#374151" }}>CPF</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: "#374151" }}>Nascimento</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: "#374151" }}>Status</TableCell>
-                  <TableCell sx={{ fontWeight: 700, color: "#374151" }} align="right">Ações</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {patients.map((patient) => (
-                  <TableRow
-                    key={patient.id}
-                    sx={{ "&:last-child td": { border: 0 } }}
-                  >
-                    <TableCell>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                        <Avatar
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            bgcolor: "#d1fae5",
-                            color: "primary.dark",
-                            fontSize: 14,
-                            fontWeight: 700,
-                          }}
-                        >
-                          {getInitials(patient.nome)}
-                        </Avatar>
-                        <Typography sx={{ fontWeight: 600, color: "#111827", fontSize: 14 }}>
-                          {patient.nome}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell sx={{ color: "#6b7280", fontSize: 14 }}>{patient.email}</TableCell>
-                    <TableCell sx={{ color: "#6b7280", fontSize: 14 }}>
-                      {patient.cpf
-                        ? patient.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
-                        : "—"}
-                    </TableCell>
-                    <TableCell sx={{ color: "#6b7280", fontSize: 14 }}>
-                      {formatDate(patient.dataNascimento)}
-                    </TableCell>
-                    <TableCell>
-                      {patient.mustChangePassword ? (
-                        <Chip
-                          label="Aguardando acesso"
-                          size="small"
-                          sx={{ bgcolor: "#fef3c7", color: "#92400e", fontWeight: 600, fontSize: 12 }}
-                        />
-                      ) : (
-                        <Chip
-                          label="Ativo"
-                          size="small"
-                          sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: 12 }}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell align="right">
-                      <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end" }}>
-                        <Tooltip title="Ver evolução">
-                          <IconButton
-                            size="small"
-                            onClick={() => router.push(`/nutritionist/patients/${patient.id}`)}
-                            sx={{ color: "#8b5cf6" }}
-                          >
-                            <BarChart2 size={17} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Ver ficha">
-                          <IconButton
-                            size="small"
-                            onClick={() => openProfile(patient, "view")}
-                            sx={{ color: "primary.dark" }}
-                          >
-                            <Eye size={17} />
-                          </IconButton>
-                        </Tooltip>
-                        <Tooltip title="Editar ficha">
-                          <IconButton
-                            size="small"
-                            onClick={() => openProfile(patient, "edit")}
-                            sx={{ color: "#6b7280" }}
-                          >
-                            <Pencil size={17} />
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </TableCell>
+          <>
+            {/* ── MOBILE: cards ── */}
+            <Box sx={{ display: { xs: "flex", md: "none" }, flexDirection: "column", gap: 1.5 }}>
+              {patients.map((patient) => (
+                <Paper
+                  key={patient.id}
+                  elevation={0}
+                  sx={{ border: "1px solid #e5e7eb", borderRadius: 2, p: 2 }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.25 }}>
+                    <Avatar sx={{ width: 42, height: 42, bgcolor: "#d1fae5", color: "primary.dark", fontSize: 15, fontWeight: 700 }}>
+                      {getInitials(patient.nome)}
+                    </Avatar>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography noWrap sx={{ fontWeight: 700, color: "#111827", fontSize: 15 }}>
+                        {patient.nome}
+                      </Typography>
+                      <Typography noWrap sx={{ fontSize: 13, color: "#6b7280" }}>
+                        {patient.email}
+                      </Typography>
+                    </Box>
+                    {patient.mustChangePassword ? (
+                      <Chip label="Aguardando" size="small" sx={{ bgcolor: "#fef3c7", color: "#92400e", fontWeight: 600, fontSize: 11 }} />
+                    ) : (
+                      <Chip label="Ativo" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: 11 }} />
+                    )}
+                  </Box>
+                  <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<BarChart2 size={14} />}
+                      onClick={() => router.push(`/nutritionist/patients/${patient.id}`)}
+                      sx={{ flex: 1, fontSize: 12, borderColor: "#e5e7eb", color: "#8b5cf6" }}
+                    >
+                      Evolução
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<Eye size={14} />}
+                      onClick={() => openProfile(patient, "view")}
+                      sx={{ flex: 1, fontSize: 12, borderColor: "#e5e7eb", color: "#10b981" }}
+                    >
+                      Ficha
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<Pencil size={14} />}
+                      onClick={() => openProfile(patient, "edit")}
+                      sx={{ flex: 1, fontSize: 12, borderColor: "#e5e7eb", color: "#6b7280" }}
+                    >
+                      Editar
+                    </Button>
+                  </Box>
+                </Paper>
+              ))}
+            </Box>
+
+            {/* ── DESKTOP: tabela ── */}
+            <TableContainer
+              component={Paper}
+              elevation={0}
+              sx={{ display: { xs: "none", md: "block" }, border: "1px solid", borderColor: "#e5e7eb", borderRadius: 1 }}
+            >
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: "#f9fafb" }}>
+                    <TableCell sx={{ fontWeight: 700, color: "#374151" }}>Paciente</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "#374151" }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "#374151" }}>CPF</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "#374151" }}>Nascimento</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "#374151" }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "#374151" }} align="right">Ações</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {patients.map((patient) => (
+                    <TableRow key={patient.id} sx={{ "&:last-child td": { border: 0 } }}>
+                      <TableCell>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                          <Avatar sx={{ width: 36, height: 36, bgcolor: "#d1fae5", color: "primary.dark", fontSize: 14, fontWeight: 700 }}>
+                            {getInitials(patient.nome)}
+                          </Avatar>
+                          <Typography sx={{ fontWeight: 600, color: "#111827", fontSize: 14 }}>
+                            {patient.nome}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ color: "#6b7280", fontSize: 14 }}>{patient.email}</TableCell>
+                      <TableCell sx={{ color: "#6b7280", fontSize: 14 }}>
+                        {patient.cpf ? patient.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : "—"}
+                      </TableCell>
+                      <TableCell sx={{ color: "#6b7280", fontSize: 14 }}>{formatDate(patient.dataNascimento)}</TableCell>
+                      <TableCell>
+                        {patient.mustChangePassword ? (
+                          <Chip label="Aguardando acesso" size="small" sx={{ bgcolor: "#fef3c7", color: "#92400e", fontWeight: 600, fontSize: 12 }} />
+                        ) : (
+                          <Chip label="Ativo" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: 12 }} />
+                        )}
+                      </TableCell>
+                      <TableCell align="right">
+                        <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end" }}>
+                          <Tooltip title="Ver evolução">
+                            <IconButton size="small" onClick={() => router.push(`/nutritionist/patients/${patient.id}`)} sx={{ color: "#8b5cf6" }}>
+                              <BarChart2 size={17} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Ver ficha">
+                            <IconButton size="small" onClick={() => openProfile(patient, "view")} sx={{ color: "primary.dark" }}>
+                              <Eye size={17} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Editar ficha">
+                            <IconButton size="small" onClick={() => openProfile(patient, "edit")} sx={{ color: "#6b7280" }}>
+                              <Pencil size={17} />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </>
         )}
       </Box>
 
