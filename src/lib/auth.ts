@@ -213,6 +213,20 @@ export function getDashboardPathByRole(role: UserRole) {
   return "/home";
 }
 
+export async function forgotPassword(email: string): Promise<void> {
+  await request<{ message: string }>("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export async function resetPassword(token: string, novaSenha: string): Promise<void> {
+  await request<{ message: string }>("/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, novaSenha }),
+  });
+}
+
 export function clearSession() {
   if (typeof window === "undefined") {
     return;
