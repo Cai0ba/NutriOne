@@ -16,6 +16,7 @@ import Typography from "@mui/material/Typography";
 import { LockKeyhole, LogIn, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ForgotPasswordModal } from "./ForgotPasswordModal";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import {
@@ -60,8 +61,9 @@ const tabs: LoginTab[] = [
 
 export function LoginForm() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState(0);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [activeTab, setActiveTab]       = useState(0);
+  const [formError, setFormError]       = useState<string | null>(null);
+  const [forgotOpen, setForgotOpen]     = useState(false);
   const activeLogin = tabs[activeTab];
 
   const {
@@ -104,6 +106,7 @@ export function LoginForm() {
   };
 
   return (
+    <>
     <Card
       component="section"
       elevation={10}
@@ -258,9 +261,11 @@ export function LoginForm() {
           />
 
           <Link
-            href="#"
+            component="button"
+            type="button"
             underline="none"
-            sx={{ color: "primary.dark", fontSize: 14, fontWeight: 700 }}
+            onClick={() => setForgotOpen(true)}
+            sx={{ color: "primary.dark", fontSize: 14, fontWeight: 700, background: "none", border: "none", cursor: "pointer" }}
           >
             Esqueceu a senha?
           </Link>
@@ -280,5 +285,8 @@ export function LoginForm() {
         </Button>
       </Box>
     </Card>
+
+    <ForgotPasswordModal open={forgotOpen} onClose={() => setForgotOpen(false)} />
+    </>
   );
 }
