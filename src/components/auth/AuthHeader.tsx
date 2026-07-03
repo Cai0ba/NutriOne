@@ -37,7 +37,7 @@ export function AuthHeader() {
             component="span"
             sx={{ color: "text.primary", fontSize: 22, fontWeight: 700 }}
           >
-            NutriConnect
+            NutriOne
           </Typography>
         </Box>
 
