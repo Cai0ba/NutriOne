@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import {
   getMyPatients,
   getStoredToken,
+  getStoredUser,
   type AuthMeResponse,
   type Patient,
 } from "@/lib/auth";
@@ -81,7 +82,8 @@ export function NutritionistDashboard({ session }: NutritionistDashboardProps) {
     setPatients((prev) => [...prev, patient]);
   };
 
-  const displayName = session.email.split("@")[0];
+  const storedUser  = getStoredUser();
+  const displayName = storedUser?.nome?.split(" ")[0] ?? session.email.split("@")[0];
 
   return (
     <DashboardLayout userName={displayName}>
