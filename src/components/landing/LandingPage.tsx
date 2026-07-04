@@ -65,13 +65,13 @@ const features = [
 const steps = [
   {
     number: "1",
-    title: "Crie sua conta",
-    desc: "Cadastre-se gratuitamente em menos de 2 minutos. Sem cartão de crédito.",
+    title: "Entre em contato",
+    desc: "Fale com a gente pelo WhatsApp. Criamos sua conta e configuramos tudo para você começar.",
   },
   {
     number: "2",
     title: "Adicione seus pacientes",
-    desc: "Convide seus pacientes para a plataforma. Eles terão acesso ao próprio painel.",
+    desc: "Cadastre seus pacientes direto na plataforma. Eles recebem acesso ao próprio painel.",
   },
   {
     number: "3",
@@ -241,7 +241,7 @@ function HeroSection() {
         </Box>
 
         <Typography sx={{ mt: 3, fontSize: 13, color: "#9ca3af" }}>
-          Acesso mediante cadastro · Entre em contato para começar
+          Acesso somente mediante convite · Entre em contato para começar
         </Typography>
       </Container>
     </Box>
@@ -496,7 +496,7 @@ function CtaSection() {
           Falar pelo WhatsApp
         </Button>
         <Typography sx={{ mt: 2.5, fontSize: 13, color: "#9ca3af" }}>
-          Acesso mediante cadastro · Resposta rápida
+          Acesso somente mediante convite · Resposta rápida
         </Typography>
       </Container>
     </Box>
