@@ -4,8 +4,11 @@ import Alert from "@mui/material/Alert";
 import Avatar from "@mui/material/Avatar";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import { ArrowLeft } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { getMyPatients, getStoredToken, type Patient } from "@/lib/auth";
@@ -22,6 +25,8 @@ function getInitials(nome: string) {
 }
 
 export function NutritionistMessagesPage() {
+  const isMobile = useMediaQuery("(max-width:899px)");
+
   const [patients, setPatients]   = useState<Patient[]>([]);
   const [selected, setSelected]   = useState<Patient | null>(null);
   const [messages, setMessages]   = useState<Message[]>([]);
@@ -29,17 +34,21 @@ export function NutritionistMessagesPage() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [error, setError]         = useState<string | null>(null);
 
+  // On mobile, track whether the chat panel is open
+  const [chatOpen, setChatOpen] = useState(false);
+
   useEffect(() => {
     const token = getStoredToken();
     if (!token) return;
     getMyPatients(token)
       .then((res) => {
         setPatients(res.patients);
-        if (res.patients.length > 0) setSelected(res.patients[0]);
+        // Auto-select first patient only on desktop
+        if (res.patients.length > 0 && !isMobile) setSelected(res.patients[0]);
       })
       .catch(() => setError("Não foi possível carregar seus pacientes."))
       .finally(() => setLoadingPatients(false));
-  }, []);
+  }, [isMobile]);
 
   const loadConversation = useCallback(async (patientId: string) => {
     const token = getStoredToken();
@@ -60,6 +69,15 @@ export function NutritionistMessagesPage() {
     if (selected) loadConversation(selected.id);
   }, [selected, loadConversation]);
 
+  const handleSelectPatient = (p: Patient) => {
+    setSelected(p);
+    if (isMobile) setChatOpen(true);
+  };
+
+  const handleBack = () => {
+    setChatOpen(false);
+  };
+
   const handleSend = async (texto: string) => {
     const token = getStoredToken();
     if (!token || !selected) return;
@@ -67,72 +85,124 @@ export function NutritionistMessagesPage() {
     setMessages((prev) => [...prev, msg]);
   };
 
+  // Mobile: show chat panel when a patient is selected
+  const showChat  = !isMobile || chatOpen;
+  const showList  = !isMobile || !chatOpen;
+
+  const patientListHeight = isMobile
+    ? "calc(100vh - 132px)" // AppBar + BottomNav
+    : "calc(100vh - 72px)";
+
   return (
     <DashboardLayout>
-      <Box sx={{ px: { xs: 2, md: 4 }, py: 3, height: "calc(100vh - 72px)" }}>
-        <Box sx={{ mb: 2 }}>
-          <Typography sx={{ fontSize: 24, fontWeight: 900, color: "#111827" }}>Mensagens</Typography>
-          <Typography sx={{ fontSize: 13, color: "#6b7280" }}>Converse com seus pacientes</Typography>
-        </Box>
+      <Box sx={{ px: { xs: 0, md: 4 }, py: { xs: 0, md: 3 }, height: patientListHeight, display: "flex", flexDirection: "column" }}>
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {/* Header — only on desktop or list view */}
+        {showList && (
+          <Box sx={{ px: { xs: 2, md: 0 }, pt: { xs: 2, md: 0 }, mb: 2 }}>
+            <Typography sx={{ fontSize: 24, fontWeight: 900, color: "#111827" }}>Mensagens</Typography>
+            <Typography sx={{ fontSize: 13, color: "#6b7280" }}>Converse com seus pacientes</Typography>
+          </Box>
+        )}
 
-        <Box sx={{ display: "flex", gap: 2, height: "calc(100% - 64px)" }}>
-          {/* Lista de pacientes */}
-          <Paper elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 2, width: 280, overflowY: "auto", flexShrink: 0 }}>
-            {loadingPatients ? (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-                <CircularProgress color="primary" size={28} />
-              </Box>
-            ) : patients.length === 0 ? (
-              <Typography sx={{ color: "#9ca3af", fontSize: 13, textAlign: "center", py: 6, px: 2 }}>
-                Você ainda não tem pacientes vinculados.
-              </Typography>
-            ) : (
-              patients.map((p) => (
-                <Box
-                  key={p.id}
-                  onClick={() => setSelected(p)}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1.5,
-                    px: 2,
-                    py: 1.5,
-                    cursor: "pointer",
-                    bgcolor: selected?.id === p.id ? "#ecfdf5" : "transparent",
-                    borderBottom: "1px solid #f3f4f6",
-                    "&:hover": { bgcolor: selected?.id === p.id ? "#ecfdf5" : "#f9fafb" },
-                  }}
-                >
-                  <Avatar sx={{ width: 36, height: 36, bgcolor: "#d1fae5", color: "primary.dark", fontSize: 13, fontWeight: 800 }}>
-                    {getInitials(p.nome)}
+        {error && <Alert severity="error" sx={{ mb: 2, mx: { xs: 2, md: 0 } }}>{error}</Alert>}
+
+        <Box sx={{ display: "flex", gap: 2, flex: 1, minHeight: 0 }}>
+          {/* ── Lista de pacientes ── */}
+          {showList && (
+            <Paper
+              elevation={0}
+              sx={{
+                border: { xs: "none", md: "1px solid #e5e7eb" },
+                borderRadius: { xs: 0, md: 2 },
+                width: { xs: "100%", md: 280 },
+                overflowY: "auto",
+                flexShrink: 0,
+              }}
+            >
+              {loadingPatients ? (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+                  <CircularProgress color="primary" size={28} />
+                </Box>
+              ) : patients.length === 0 ? (
+                <Typography sx={{ color: "#9ca3af", fontSize: 13, textAlign: "center", py: 6, px: 2 }}>
+                  Você ainda não tem pacientes vinculados.
+                </Typography>
+              ) : (
+                patients.map((p) => (
+                  <Box
+                    key={p.id}
+                    onClick={() => handleSelectPatient(p)}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                      px: 2,
+                      py: 1.75,
+                      cursor: "pointer",
+                      bgcolor: selected?.id === p.id ? "#ecfdf5" : "transparent",
+                      borderBottom: "1px solid #f3f4f6",
+                      "&:hover": { bgcolor: selected?.id === p.id ? "#ecfdf5" : "#f9fafb" },
+                    }}
+                  >
+                    <Avatar sx={{ width: 40, height: 40, bgcolor: "#d1fae5", color: "primary.dark", fontSize: 14, fontWeight: 800 }}>
+                      {getInitials(p.nome)}
+                    </Avatar>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography noWrap sx={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>
+                        {p.nome}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))
+              )}
+            </Paper>
+          )}
+
+          {/* ── Painel de conversa ── */}
+          {showChat && (
+            <Paper
+              elevation={0}
+              sx={{
+                border: { xs: "none", md: "1px solid #e5e7eb" },
+                borderRadius: { xs: 0, md: 2 },
+                flex: 1,
+                display: "flex",
+                flexDirection: "column",
+                minWidth: 0,
+              }}
+            >
+              {/* Mobile: header with back button and patient name */}
+              {isMobile && selected && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1.25, borderBottom: "1px solid #f3f4f6" }}>
+                  <IconButton onClick={handleBack} size="small">
+                    <ArrowLeft size={20} color="#374151" />
+                  </IconButton>
+                  <Avatar sx={{ width: 32, height: 32, bgcolor: "#d1fae5", color: "primary.dark", fontSize: 12, fontWeight: 800 }}>
+                    {getInitials(selected.nome)}
                   </Avatar>
-                  <Typography noWrap sx={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>
-                    {p.nome}
+                  <Typography noWrap sx={{ fontSize: 15, fontWeight: 700, color: "#111827" }}>
+                    {selected.nome}
                   </Typography>
                 </Box>
-              ))
-            )}
-          </Paper>
+              )}
 
-          {/* Conversa */}
-          <Paper elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 2, flex: 1 }}>
-            {selected ? (
-              <ConversationPanel
-                messages={messages}
-                loading={loadingMessages}
-                currentRole="nutritionist"
-                onSend={handleSend}
-              />
-            ) : (
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-                <Typography sx={{ color: "#9ca3af", fontSize: 14 }}>
-                  Selecione um paciente para ver a conversa.
-                </Typography>
-              </Box>
-            )}
-          </Paper>
+              {selected ? (
+                <ConversationPanel
+                  messages={messages}
+                  loading={loadingMessages}
+                  currentRole="nutritionist"
+                  onSend={handleSend}
+                />
+              ) : (
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                  <Typography sx={{ color: "#9ca3af", fontSize: 14 }}>
+                    Selecione um paciente para ver a conversa.
+                  </Typography>
+                </Box>
+              )}
+            </Paper>
+          )}
         </Box>
       </Box>
     </DashboardLayout>
