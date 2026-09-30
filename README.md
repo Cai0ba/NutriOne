@@ -70,8 +70,8 @@ cd NutriOne
 npm install
 
 # 3. Configure as variáveis de ambiente
-cp .env.example .env.local
-# edite .env.local com os valores corretos
+# (não há .env.example no repositório: crie o .env.local manualmente
+#  com as variáveis da seção abaixo)
 
 # 4. Inicie o servidor de desenvolvimento (porta 3001)
 npm run dev
@@ -89,17 +89,15 @@ Crie um arquivo `.env.local` na raiz com as seguintes variáveis:
 # URL da API backend (NutriOne API)
 NEXT_PUBLIC_API_URL=http://localhost:3000
 
-# URL base do site (usada em metadados Open Graph e Sentry)
+# URL base do site (metadados Open Graph, robots e sitemap)
 NEXT_PUBLIC_SITE_URL=https://nutrioneapp.com.br
-
-# DSN do Sentry para o frontend (opcional — monitoramento de erros)
-SENTRY_DSN=https://d46f3da509184aeaa4293e4d8adeedb8@o4511669263269888.ingest.us.sentry.io/4511669277426700
-NEXT_PUBLIC_SENTRY_DSN=https://d46f3da509184aeaa4293e4d8adeedb8@o4511669263269888.ingest.us.sentry.io/4511669277426700
 
 # Auth token do Sentry (necessário apenas para upload de source maps no build)
 SENTRY_AUTH_TOKEN=
 ```
 
+> O DSN do Sentry está fixo em `sentry.client.config.ts`, `sentry.server.config.ts` e `sentry.edge.config.ts`; não é lido de variável de ambiente.
+> Se `NEXT_PUBLIC_API_URL` não for definida, o front usa `http://localhost:3000`.
 > Em produção no Vercel, configure estas variáveis no painel **Settings → Environment Variables**.
 
 ---
@@ -183,7 +181,10 @@ src/
 │   │   ├── EditAssessmentModal.tsx     # Modal para editar avaliação existente
 │   │   ├── PatientProfileModal.tsx     # Modal para ver/editar ficha do paciente
 │   │   ├── UserRegistrationModal.tsx   # Modal para cadastrar novo paciente
-│   │   └── AdminDashboard.tsx          # Dashboard admin (em desenvolvimento)
+│   │   └── AdminDashboard.tsx          # LEGADO — não usado (não existe role admin)
+│   │
+│   ├── home/
+│   │   └── HomeDashboard.tsx           # LEGADO — home mockada, não usada
 │   │
 │   ├── patient/
 │   │   ├── PatientLayout.tsx       # Layout do paciente: AppBar + BottomNavigation (mobile)
@@ -219,10 +220,16 @@ src/
 │   └── common/
 │       └── ConfirmDialog.tsx       # Dialog genérico de confirmação
 │
-├── lib/
-│   ├── auth.ts       # Funções de autenticação: login, logout, register, forgot/reset password,
-│   │                 # getStoredToken, getStoredUser, saveSession, getDashboardPathByRole
-│   └── messages.ts   # Funções da API de mensagens: listMessages, sendMessage, markRead, unreadCount
+├── lib/               # Camada de acesso à API (cada arquivo tem seu próprio helper de fetch)
+│   ├── auth.ts        # login, register, change/forgot/reset password, my-patients,
+│   │                  # getStoredToken, getStoredUser, saveSession, clearSession, getDashboardPathByRole
+│   ├── patients.ts    # Ficha e avaliações físicas (visão nutricionista): /patients/:id/...
+│   ├── patient-self.ts# Dados do próprio paciente: /me/profile, /me/assessments, /me/meal-plans
+│   ├── diet.ts        # CRUD de planos alimentares + tipos (MealPlanSummary/Detail)
+│   ├── appointments.ts# Consultas (nutricionista e paciente)
+│   ├── messages.ts    # Mensagens (nutricionista e paciente), contagem de não lidas
+│   ├── useUnreadMessages.ts # Hook de polling (30 s) do badge de mensagens não lidas
+│   └── formatters.ts  # CPF, data de nascimento (DD/MM/AAAA ↔ ISO) e validações
 │
 └── app/providers.tsx  # MUI ThemeProvider + CssBaseline
 ```
@@ -235,7 +242,10 @@ src/
 - A função `getStoredToken()` recupera o token para chamadas autenticadas à API.
 - A função `getStoredUser()` retorna os dados completos do usuário (incluindo `nome`).
 - `ProtectedRoute` — HOC que verifica o token e o role; redireciona para `/login` se inválido.
-- No primeiro login, usuários com `mustChangePassword: true` são obrigados a trocar a senha via `ChangePasswordModal` antes de acessar qualquer rota.
+- No primeiro login, **pacientes** (`role: client`) com `mustChangePassword: true` são obrigados a trocar a senha via `ChangePasswordModal` antes de acessar qualquer rota. Hoje isso **não é aplicado a nutricionistas**. A flag vem do `localStorage` (o `/auth/me` devolve só o payload do JWT).
+- Regras de senha: troca no primeiro acesso exige 8+ caracteres; redefinição por e-mail aceita 6+ (o backend exige 6+).
+- O checkbox "Lembrar de mim" do login ainda não tem efeito: a sessão sempre usa `localStorage`.
+- Não há tratamento global de `401`/token expirado: a sessão só é revalidada quando uma rota protegida é aberta.
 
 ### Fluxo de Recuperação de Senha
 
@@ -270,7 +280,8 @@ Configurados em `src/app/layout.tsx`:
 - `description` e `keywords` otimizados para busca de software para nutricionistas
 - Open Graph e Twitter Card completos
 - Imagem OG dinâmica gerada em `src/app/opengraph-image.tsx` (1200×630, Edge Runtime)
-- Favicon SVG em `src/app/icon.svg` (folha branca em fundo verde arredondado)
+- Favicon em `src/app/favicon.ico`
+- Atenção: `layout.tsx` referencia `/og-image.png` em `openGraph.images`/`twitter.images`, arquivo que não existe em `public/`. A imagem gerada por `opengraph-image.tsx` é a válida; remover essas referências evita um link quebrado
 - `robots.ts` — permite `/`; bloqueia `/home/`, `/nutritionist/`, `/api/`
 - `sitemap.ts` — inclui `/` com `changeFrequency: "weekly"`
 
@@ -305,13 +316,15 @@ npm run test:cov
 
 Stack: **Jest** + **Testing Library** (`@testing-library/react`) + **jest-fetch-mock**.
 
-Testes existentes cobrem: `ProtectedRoute`, `ConfirmDialog`, `ConversationPanel`, calendários (`MonthCalendar`, `AppointmentFormModal`, `AppointmentDetailModal`), e funções de autenticação (`auth.ts`).
+São **13 suítes / 177 testes**. Cobrem: `ProtectedRoute`, `ConfirmDialog`, `ConversationPanel`, calendários (`MonthCalendar`, `AppointmentFormModal` — incluindo regressão de fuso horário —, `AppointmentDetailModal`) e a camada `lib/` (`auth`, `patients`, `patient-self`, `diet`, `appointments`, `messages`, `formatters`).
+
+> **Estado atual:** 3 testes de `ProtectedRoute.spec.tsx` estão falhando por estarem desatualizados (esperam redirecionar para `/` e o texto "Validating", mas o código redireciona para `/login` e mostra "Validando sessão..."). Além disso, `tsc` acusa 2 erros em `auth.spec.ts` e o `eslint` reporta erros de `set-state-in-effect` (regra do React Compiler) e `no-explicit-any` em specs.
 
 ---
 
 ## Deploy (Vercel)
 
-O frontend é hospedado na **Vercel**. O deploy é automático a cada push na branch `main`.
+O frontend é hospedado na **Vercel**. O deploy é automático a cada push na branch `main`. Fluxo de branches: `feature/fix` → PR para `develop` → PR de `develop` para `main`.
 
 ```bash
 # Build de produção local (para validar antes do push)
@@ -337,3 +350,15 @@ Configure no painel da Vercel:
 
 Para solicitar acesso como nutricionista, entre em contato via WhatsApp:
 [wa.me/5531996383088](https://wa.me/5531996383088?text=Ol%C3%A1%2C+tenho+interesse+no+NutriOne!)
+
+---
+
+## Pendências e limitações conhecidas
+
+- **Duplicação:** cinco helpers de `fetch` quase idênticos em `src/lib/*`; três páginas (`patients/[patientId]/...`) repetem o mesmo `PatientLoader`; `getMyPatients` é chamado várias vezes só para localizar um paciente.
+- **Ficha do paciente:** ao salvar no `PatientProfileModal`, a avaliação física mais recente é **atualizada** (ou criada, se não houver) e peso/altura são obrigatórios; para registrar uma nova medição no histórico use "Nova Avaliação".
+- **Agenda:** o backend filtra o mês pelo fuso do servidor (UTC), o que pode ocultar consultas noturnas no último dia do mês.
+- **Chat:** a conversa aberta não atualiza sozinha (só o badge faz polling a cada 30 s); falha ao enviar mensagem não exibe erro.
+- **Textos:** mensagens de erro vindas da API (ex.: "Invalid credentials") aparecem em inglês.
+- **Segurança:** token no `localStorage`; sem logout automático em `401`.
+- `types/` (gerado pelo Next) está versionado; `AdminDashboard` e `HomeDashboard` são código morto.
