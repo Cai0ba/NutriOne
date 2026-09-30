@@ -36,6 +36,14 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+/** YYYY-MM-DD no fuso local (toISOString usaria UTC e deslocaria o dia à noite). */
+function toLocalDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 type Props = {
@@ -58,7 +66,7 @@ export function AppointmentFormModal({ open, appointment, defaultDate, onClose, 
       defaultValues: {
         patientId:   "",
         tipo:        "consulta",
-        data:        defaultDate?.toISOString().slice(0, 10) ?? "",
+        data:        defaultDate ? toLocalDateString(defaultDate) : "",
         hora:        "09:00",
         duracao:     60,
         observacoes: "",
@@ -83,7 +91,7 @@ export function AppointmentFormModal({ open, appointment, defaultDate, onClose, 
           ? appointment.patientId._id
           : appointment.patientId,
         tipo:        appointment.tipo,
-        data:        d.toISOString().slice(0, 10),
+        data:        toLocalDateString(d),
         hora:        d.toTimeString().slice(0, 5),
         duracao:     appointment.duracao,
         observacoes: appointment.observacoes ?? "",
@@ -93,7 +101,7 @@ export function AppointmentFormModal({ open, appointment, defaultDate, onClose, 
       reset({
         patientId:   "",
         tipo:        "consulta",
-        data:        defaultDate?.toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+        data:        toLocalDateString(defaultDate ?? new Date()),
         hora:        "09:00",
         duracao:     60,
         observacoes: "",

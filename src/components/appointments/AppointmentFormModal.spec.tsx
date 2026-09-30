@@ -81,6 +81,20 @@ describe('AppointmentFormModal', () => {
     expect(screen.getByText('Editar consulta')).toBeInTheDocument()
   })
 
+  it('keeps the local date and time for evening appointments in edit mode', async () => {
+    // 22:00 no fuso local: em UTC-3 já é o dia seguinte no toISOString()
+    const local = new Date(2026, 9, 1, 22, 0)
+    const appt: any = {
+      _id: 'a-1', patientId: 'p-1', tipo: 'consulta', status: 'agendado',
+      dataHora: local.toISOString(), duracao: 60, createdAt: '',
+    }
+    const { container } = render(<AppointmentFormModal {...defaultProps} appointment={appt} />)
+    await waitFor(() => {
+      expect(container.ownerDocument.querySelector('input[type="date"]')).toHaveValue('2026-10-01')
+    })
+    expect(container.ownerDocument.querySelector('input[type="time"]')).toHaveValue('22:00')
+  })
+
   it('shows "Salvar" button in edit mode', () => {
     const appt: any = {
       _id: 'a-1', patientId: 'p-1', tipo: 'consulta', status: 'agendado',
