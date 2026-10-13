@@ -352,7 +352,6 @@ Para solicitar acesso como nutricionista, entre em contato via WhatsApp:
 
 - **Duplicação:** cinco helpers de `fetch` quase idênticos em `src/lib/*`; três páginas (`patients/[patientId]/...`) repetem o mesmo `PatientLoader`; `getMyPatients` é chamado várias vezes só para localizar um paciente.
 - **Ficha do paciente:** ao salvar no `PatientProfileModal`, a avaliação física mais recente é **atualizada** (ou criada, se não houver) e peso/altura são obrigatórios; para registrar uma nova medição no histórico use "Nova Avaliação".
-- **Agenda:** o backend filtra o mês pelo fuso do servidor (UTC), o que pode ocultar consultas noturnas no último dia do mês.
 - **Chat:** a conversa aberta não atualiza sozinha (só o badge faz polling a cada 30 s); falha ao enviar mensagem não exibe erro.
 - **Textos:** algumas mensagens de erro da API ainda estão em inglês (ex.: e-mail duplicado, token ausente/expirado).
 - **Segurança:** token no `localStorage`; sem logout automático em `401`.
