@@ -21,6 +21,7 @@ export const STATUS_CFG: Record<AppointmentStatus, { label: string; color: strin
   agendado:  { label: "Agendado",  color: "#1e40af", bg: "#dbeafe" },
   realizado: { label: "Realizado", color: "#065f46", bg: "#d1fae5" },
   cancelado: { label: "Cancelado", color: "#991b1b", bg: "#fee2e2" },
+  faltou:    { label: "Faltou",    color: "#92400e", bg: "#fef3c7" },
 };
 
 export const TIPO_CFG: Record<AppointmentType, { label: string; dot: string }> = {

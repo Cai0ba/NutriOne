@@ -43,8 +43,16 @@ export function NutritionistMessagesPage() {
     getMyPatients(token)
       .then((res) => {
         setPatients(res.patients);
-        // Auto-select first patient only on desktop
-        if (res.patients.length > 0 && !isMobile) setSelected(res.patients[0]);
+        // Link direto do painel de acompanhamento: /nutritionist/messages?patientId=...
+        const wantedId = new URLSearchParams(window.location.search).get("patientId");
+        const wanted = wantedId ? res.patients.find((p) => p.id === wantedId) : undefined;
+        if (wanted) {
+          setSelected(wanted);
+          if (isMobile) setChatOpen(true);
+        } else if (res.patients.length > 0 && !isMobile) {
+          // Sem link direto: seleciona o primeiro só no desktop
+          setSelected(res.patients[0]);
+        }
       })
       .catch(() => setError("Não foi possível carregar seus pacientes."))
       .finally(() => setLoadingPatients(false));

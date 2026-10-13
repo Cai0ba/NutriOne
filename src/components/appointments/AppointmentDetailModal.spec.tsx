@@ -11,13 +11,14 @@ jest.mock('@/lib/auth', () => ({
 jest.mock('@/lib/appointments', () => ({
   cancelAppointmentNutritionist: jest.fn(),
   cancelSelfAppointment:         jest.fn(),
+  updateAppointment:             jest.fn(),
 }))
 
 jest.mock('sonner', () => ({
   toast: { success: jest.fn(), error: jest.fn() },
 }))
 
-import { cancelAppointmentNutritionist, cancelSelfAppointment } from '@/lib/appointments'
+import { cancelAppointmentNutritionist, cancelSelfAppointment, updateAppointment } from '@/lib/appointments'
 import { toast } from 'sonner'
 
 const mockCancelNutri   = cancelAppointmentNutritionist as jest.MockedFunction<typeof cancelAppointmentNutritionist>
@@ -146,5 +147,52 @@ describe('AppointmentDetailModal', () => {
     render(<AppointmentDetailModal {...defaultProps} />)
     await userEvent.click(screen.getByRole('button', { name: 'Editar' }))
     expect(defaultProps.onEdit).toHaveBeenCalledWith(agendadoAppt)
+  })
+
+  describe('dar baixa (nutricionista)', () => {
+    const mockUpdate = updateAppointment as jest.MockedFunction<typeof updateAppointment>
+
+    it('marks a scheduled appointment as realizada', async () => {
+      const updated = { ...agendadoAppt, status: 'realizado' as const }
+      mockUpdate.mockResolvedValueOnce(updated)
+      const onStatusChanged = jest.fn()
+      render(<AppointmentDetailModal {...defaultProps} onStatusChanged={onStatusChanged} />)
+
+      await userEvent.click(screen.getByRole('button', { name: 'Marcar realizada' }))
+
+      await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith('mock-token', 'appt-1', { status: 'realizado' }))
+      expect(onStatusChanged).toHaveBeenCalledWith(updated)
+      expect(defaultProps.onClose).toHaveBeenCalled()
+    })
+
+    it('registers a no-show with status faltou', async () => {
+      mockUpdate.mockResolvedValueOnce({ ...agendadoAppt, status: 'faltou' as const })
+      render(<AppointmentDetailModal {...defaultProps} onStatusChanged={jest.fn()} />)
+
+      await userEvent.click(screen.getByRole('button', { name: 'Faltou' }))
+
+      await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith('mock-token', 'appt-1', { status: 'faltou' }))
+      expect(toast.success).toHaveBeenCalledWith('Falta registrada.')
+    })
+
+    it('shows the error when the update fails', async () => {
+      mockUpdate.mockRejectedValueOnce(new Error('Sem permissão'))
+      render(<AppointmentDetailModal {...defaultProps} />)
+
+      await userEvent.click(screen.getByRole('button', { name: 'Marcar realizada' }))
+
+      await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Sem permissão'))
+    })
+
+    it('does not offer these actions to the patient', () => {
+      render(<AppointmentDetailModal {...defaultProps} role="patient" />)
+      expect(screen.queryByRole('button', { name: 'Marcar realizada' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Faltou' })).not.toBeInTheDocument()
+    })
+
+    it('does not offer them for an appointment that is not scheduled anymore', () => {
+      render(<AppointmentDetailModal {...defaultProps} appointment={{ ...agendadoAppt, status: 'realizado' }} />)
+      expect(screen.queryByRole('button', { name: 'Faltou' })).not.toBeInTheDocument()
+    })
   })
 })

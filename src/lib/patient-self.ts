@@ -10,11 +10,15 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
 type ApiErrorBody = { message?: string | string[] };
 
-async function request<T>(path: string, token: string): Promise<T> {
+async function request<T>(path: string, token: string, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${API_URL}${path}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      ...init,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        ...(init?.body ? { "Content-Type": "application/json" } : {}),
+      },
     });
   } catch (err) {
     throw new Error("Não foi possível conectar na API.", { cause: err });
@@ -42,3 +46,9 @@ export const listSelfMealPlans = (token: string) =>
 
 export const getSelfMealPlan = (token: string, planId: string) =>
   request<MealPlanDetail>(`/me/meal-plans/${planId}`, token);
+
+export const updateSelfPreferences = (token: string, modoSemNumeros: boolean) =>
+  request<{ modoSemNumeros: boolean }>("/me/preferences", token, {
+    method: "PATCH",
+    body: JSON.stringify({ modoSemNumeros }),
+  });

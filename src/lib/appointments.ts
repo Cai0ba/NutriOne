@@ -3,7 +3,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
 export type AppointmentType   = "consulta" | "retorno";
-export type AppointmentStatus = "agendado" | "realizado" | "cancelado";
+export type AppointmentStatus = "agendado" | "realizado" | "cancelado" | "faltou";
 
 export type Appointment = {
   _id: string;

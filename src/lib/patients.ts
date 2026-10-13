@@ -2,6 +2,8 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
 
 // ─── Perfil ──────────────────────────────────────────────────────────────────
 
+export type EatingDisorderHistory = "nao_informado" | "sem_historico" | "com_historico";
+
 export type PatientProfile = {
   _id?: string;
   userId: string;
@@ -10,13 +12,17 @@ export type PatientProfile = {
   altura?: number;
   telefone?: string;
   observacoes?: string;
+  /** Só o nutricionista enxerga e altera; a API nunca devolve ao paciente. */
+  historicoTranstornoAlimentar?: EatingDisorderHistory;
+  /** Preferência do próprio paciente (a API rejeita se o nutricionista enviar). */
+  modoSemNumeros?: boolean;
   createdAt?: string;
   updatedAt?: string;
 };
 
 export type UpsertPatientProfilePayload = Omit<
   PatientProfile,
-  "_id" | "userId" | "createdAt" | "updatedAt"
+  "_id" | "userId" | "createdAt" | "updatedAt" | "modoSemNumeros"
 >;
 
 // ─── Avaliação física ─────────────────────────────────────────────────────────

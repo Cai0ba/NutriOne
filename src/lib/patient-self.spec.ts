@@ -3,6 +3,7 @@ import {
   listSelfAssessments,
   listSelfMealPlans,
   getSelfMealPlan,
+  updateSelfPreferences,
 } from './patient-self'
 import type { PatientProfile, PhysicalAssessment } from './patients'
 import type { MealPlanSummary, MealPlanDetail } from './diet'
@@ -169,5 +170,29 @@ describe('getSelfMealPlan', () => {
   it('throws on 404', async () => {
     mockError(404, { message: 'Plano não encontrado' })
     await expect(getSelfMealPlan(TOKEN, 'plan-x')).rejects.toThrow('Plano não encontrado')
+  })
+})
+
+describe('updateSelfPreferences', () => {
+  beforeEach(() => mockFetch.mockReset())
+
+  it('sends a PATCH with the preference and the auth header', async () => {
+    mockOk({ modoSemNumeros: true })
+
+    const result = await updateSelfPreferences('tok', true)
+
+    const [url, init] = mockFetch.mock.calls[0]
+    expect(url).toMatch(/\/me\/preferences$/)
+    expect(init.method).toBe('PATCH')
+    expect(JSON.parse(init.body)).toEqual({ modoSemNumeros: true })
+    expect(init.headers.Authorization).toBe('Bearer tok')
+    expect(init.headers['Content-Type']).toBe('application/json')
+    expect(result).toEqual({ modoSemNumeros: true })
+  })
+
+  it('throws the API message on failure', async () => {
+    mockError(400, { message: ['modoSemNumeros must be a boolean value'] })
+
+    await expect(updateSelfPreferences('tok', true)).rejects.toThrow('modoSemNumeros must be a boolean value')
   })
 })

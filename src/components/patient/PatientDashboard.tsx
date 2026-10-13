@@ -14,6 +14,8 @@ import { getStoredToken, getStoredUser } from "@/lib/auth";
 import type { MealPlanSummary } from "@/lib/diet";
 import type { PhysicalAssessment } from "@/lib/patients";
 import { listSelfAssessments, listSelfMealPlans } from "@/lib/patient-self";
+import { usePatientPreferences } from "@/lib/usePatientPreferences";
+import { NumbersHiddenNotice } from "./NumbersHiddenNotice";
 import { PatientLayout } from "./PatientLayout";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -174,6 +176,8 @@ export function PatientDashboard() {
   const [assessments, setAssessments] = useState<PhysicalAssessment[]>([]);
   const [plans,       setPlans]       = useState<MealPlanSummary[]>([]);
   const [loading,     setLoading]     = useState(true);
+  const prefs = usePatientPreferences();
+  const hideNumbers = prefs.modoSemNumeros !== false; // carregando também esconde
 
   const load = useCallback(async () => {
     const token = getStoredToken();
@@ -225,14 +229,16 @@ export function PatientDashboard() {
           </Typography>
         </Box>
 
-        {loading ? (
+        {loading || prefs.loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
             <CircularProgress color="primary" />
           </Box>
         ) : (
           <>
             {/* ── Stat Cards ── */}
-            {assessments.length > 0 ? (
+            {hideNumbers ? (
+              <NumbersHiddenNotice compact />
+            ) : assessments.length > 0 ? (
               <Box
                 sx={{
                   display: "grid",
@@ -283,9 +289,9 @@ export function PatientDashboard() {
             )}
 
             {/* ── Mini charts + Plano ── */}
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr 360px" }, gap: 2, mb: 3 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: hideNumbers ? { xs: "1fr", md: "360px" } : { xs: "1fr", md: "1fr 1fr 360px" }, gap: 2, mb: 3 }}>
               {/* Peso */}
-              <Paper elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 2, p: 2 }}>
+              {!hideNumbers && (<Paper elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 2, p: 2 }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
                   <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>Peso (kg)</Typography>
                   <Button component={Link} href="/home/evolution" size="small" endIcon={<ChevronRight size={12} />} sx={{ fontSize: 12, p: 0.5 }}>
@@ -293,10 +299,10 @@ export function PatientDashboard() {
                   </Button>
                 </Box>
                 <MiniChart data={chartData.map((d) => ({ date: d.date, value: d.peso }))} color="#10b981" dataKey="peso" />
-              </Paper>
+              </Paper>)}
 
               {/* IMC */}
-              <Paper elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 2, p: 2 }}>
+              {!hideNumbers && (<Paper elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 2, p: 2 }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
                   <Typography sx={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>IMC</Typography>
                   <Button component={Link} href="/home/evolution" size="small" endIcon={<ChevronRight size={12} />} sx={{ fontSize: 12, p: 0.5 }}>
@@ -304,7 +310,7 @@ export function PatientDashboard() {
                   </Button>
                 </Box>
                 <MiniChart data={chartData.map((d) => ({ date: d.date, value: d.imc }))} color="#6366f1" dataKey="imc" />
-              </Paper>
+              </Paper>)}
 
               {/* Plano ativo */}
               <Box>

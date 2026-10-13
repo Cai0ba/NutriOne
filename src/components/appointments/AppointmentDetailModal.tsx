@@ -15,7 +15,9 @@ import { toast } from "sonner";
 import {
   cancelAppointmentNutritionist,
   cancelSelfAppointment,
+  updateAppointment,
   type Appointment,
+  type AppointmentStatus,
 } from "@/lib/appointments";
 import { getStoredToken } from "@/lib/auth";
 import { STATUS_CFG, TIPO_CFG } from "./MonthCalendar";
@@ -29,6 +31,8 @@ type Props = {
   onClose:     () => void;
   onEdit?:     (appt: Appointment) => void;
   onCancelled: (appt: Appointment) => void;
+  /** Nutricionista deu baixa na consulta (realizada ou falta). */
+  onStatusChanged?: (appt: Appointment) => void;
 };
 
 // ─── Linha de detalhe ─────────────────────────────────────────────────────────
@@ -51,8 +55,9 @@ function DetailRow({ icon, label, value }: { icon: React.ReactNode; label: strin
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
-export function AppointmentDetailModal({ open, appointment, role, onClose, onEdit, onCancelled }: Props) {
+export function AppointmentDetailModal({ open, appointment, role, onClose, onEdit, onCancelled, onStatusChanged }: Props) {
   const [cancelling, setCancelling] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [showCancelForm, setShowCancelForm] = useState(false);
   const [motivo, setMotivo] = useState("");
 
@@ -85,6 +90,22 @@ export function AppointmentDetailModal({ open, appointment, role, onClose, onEdi
       toast.error(err instanceof Error ? err.message : "Erro ao cancelar.");
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleSetStatus = async (status: AppointmentStatus) => {
+    const token = getStoredToken();
+    if (!token || !appointment) return;
+    setUpdatingStatus(true);
+    try {
+      const updated = await updateAppointment(token, appointment._id, { status });
+      toast.success(status === "faltou" ? "Falta registrada." : "Consulta marcada como realizada.");
+      onStatusChanged?.(updated);
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Erro ao atualizar a consulta.");
+    } finally {
+      setUpdatingStatus(false);
     }
   };
 
@@ -163,6 +184,27 @@ export function AppointmentDetailModal({ open, appointment, role, onClose, onEdi
 
         {canCancel && !showCancelForm && (
           <>
+            {role === "nutritionist" && (
+              <>
+                <Button
+                  onClick={() => handleSetStatus("realizado")}
+                  disabled={updatingStatus}
+                  variant="outlined"
+                  color="primary"
+                  sx={{ borderRadius: 1, fontWeight: 700 }}
+                >
+                  Marcar realizada
+                </Button>
+                <Button
+                  onClick={() => handleSetStatus("faltou")}
+                  disabled={updatingStatus}
+                  variant="outlined"
+                  sx={{ borderRadius: 1, fontWeight: 700, color: "#92400e", borderColor: "#d97706", "&:hover": { borderColor: "#b45309", bgcolor: "#fffbeb" } }}
+                >
+                  Faltou
+                </Button>
+              </>
+            )}
             {role === "nutritionist" && onEdit && (
               <Button
                 onClick={() => { onEdit(appointment); handleClose(); }}

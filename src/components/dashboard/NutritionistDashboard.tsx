@@ -25,7 +25,10 @@ import {
   type AuthMeResponse,
   type Patient,
 } from "@/lib/auth";
+import { getEngagement, RISK_CFG, type EngagementPatient, type EngagementResponse } from "@/lib/engagement";
+import { AppointmentFormModal } from "../appointments/AppointmentFormModal";
 import { DashboardLayout } from "./DashboardLayout";
+import { EngagementPanel } from "./EngagementPanel";
 import { PatientProfileModal } from "./PatientProfileModal";
 import { UserRegistrationModal } from "./UserRegistrationModal";
 
@@ -56,6 +59,10 @@ export function NutritionistDashboard({ session }: NutritionistDashboardProps) {
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [engagement, setEngagement] = useState<EngagementResponse | null>(null);
+  const [engagementLoading, setEngagementLoading] = useState(true);
+  const [engagementError, setEngagementError] = useState(false);
+  const [scheduleForPatientId, setScheduleForPatientId] = useState<string | null>(null);
 
   const openProfile = (patient: Patient, mode: "view" | "edit" = "view") => {
     setSelectedPatient(patient);
@@ -74,9 +81,51 @@ export function NutritionistDashboard({ session }: NutritionistDashboardProps) {
     }
   }, []);
 
+  // Recarrega o acompanhamento incrementando a chave (usado no "tentar de novo" e após agendar).
+  const [engagementKey, setEngagementKey] = useState(0);
+  const refreshEngagement = () => setEngagementKey((k) => k + 1);
+
   useEffect(() => {
     fetchPatients();
   }, [fetchPatients]);
+
+  useEffect(() => {
+    const token = getStoredToken();
+    if (!token) return;
+    let cancelled = false;
+
+    getEngagement(token)
+      .then((data) => {
+        if (cancelled) return;
+        setEngagement(data);
+        setEngagementError(false);
+      })
+      .catch(() => {
+        if (!cancelled) setEngagementError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setEngagementLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [engagementKey]);
+
+  const riskByPatient = new Map<string, EngagementPatient>(
+    (engagement?.patients ?? []).map((p) => [p.patientId, p]),
+  );
+
+  const renderRiskChip = (patientId: string) => {
+    const risk = riskByPatient.get(patientId);
+    if (!risk) return null;
+    const cfg = RISK_CFG[risk.nivelRisco];
+    return (
+      <Tooltip title={risk.motivos.length ? risk.motivos.map((m) => m.texto).join(" · ") : "Sem pendências"}>
+        <Chip label={cfg.label} size="small" sx={{ bgcolor: cfg.bg, color: cfg.color, fontWeight: 600, fontSize: 12 }} />
+      </Tooltip>
+    );
+  };
 
   const handlePatientCreated = (patient: Patient) => {
     setPatients((prev) => [...prev, patient]);
@@ -132,6 +181,20 @@ export function NutritionistDashboard({ session }: NutritionistDashboardProps) {
             + Adicionar Paciente
           </Button>
         </Box>
+
+        <EngagementPanel
+          data={engagement}
+          loading={engagementLoading}
+          error={engagementError}
+          onRetry={() => {
+            setEngagementLoading(true);
+            setEngagementError(false);
+            refreshEngagement();
+          }}
+          onMessage={(id) => router.push(`/nutritionist/messages?patientId=${id}`)}
+          onScheduleReturn={setScheduleForPatientId}
+          onEvolution={(id) => router.push(`/nutritionist/patients/${id}`)}
+        />
 
         {loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
@@ -218,6 +281,7 @@ export function NutritionistDashboard({ session }: NutritionistDashboardProps) {
                       <Chip label="Ativo" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: 11 }} />
                     )}
                   </Box>
+                  <Box sx={{ mb: 0.5 }}>{renderRiskChip(patient.id)}</Box>
                   <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
                     <Button
                       size="small"
@@ -265,6 +329,7 @@ export function NutritionistDashboard({ session }: NutritionistDashboardProps) {
                     <TableCell sx={{ fontWeight: 700, color: "#374151" }}>CPF</TableCell>
                     <TableCell sx={{ fontWeight: 700, color: "#374151" }}>Nascimento</TableCell>
                     <TableCell sx={{ fontWeight: 700, color: "#374151" }}>Status</TableCell>
+                    <TableCell sx={{ fontWeight: 700, color: "#374151" }}>Acompanhamento</TableCell>
                     <TableCell sx={{ fontWeight: 700, color: "#374151" }} align="right">Ações</TableCell>
                   </TableRow>
                 </TableHead>
@@ -293,6 +358,7 @@ export function NutritionistDashboard({ session }: NutritionistDashboardProps) {
                           <Chip label="Ativo" size="small" sx={{ bgcolor: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: 12 }} />
                         )}
                       </TableCell>
+                      <TableCell>{renderRiskChip(patient.id)}</TableCell>
                       <TableCell align="right">
                         <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end" }}>
                           <Tooltip title="Ver evolução">
@@ -326,6 +392,16 @@ export function NutritionistDashboard({ session }: NutritionistDashboardProps) {
         creatorRole={session.role}
         onClose={() => setIsRegistrationOpen(false)}
         onCreated={handlePatientCreated}
+      />
+
+      <AppointmentFormModal
+        open={scheduleForPatientId !== null}
+        defaultPatientId={scheduleForPatientId ?? undefined}
+        onClose={() => setScheduleForPatientId(null)}
+        onSaved={() => {
+          setScheduleForPatientId(null);
+          refreshEngagement();
+        }}
       />
 
       <PatientProfileModal
