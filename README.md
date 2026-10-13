@@ -180,11 +180,7 @@ src/
 │   │   ├── NewAssessmentModal.tsx      # Modal para nova avaliação física
 │   │   ├── EditAssessmentModal.tsx     # Modal para editar avaliação existente
 │   │   ├── PatientProfileModal.tsx     # Modal para ver/editar ficha do paciente
-│   │   ├── UserRegistrationModal.tsx   # Modal para cadastrar novo paciente
-│   │   └── AdminDashboard.tsx          # LEGADO — não usado (não existe role admin)
-│   │
-│   ├── home/
-│   │   └── HomeDashboard.tsx           # LEGADO — home mockada, não usada
+│   │   └── UserRegistrationModal.tsx   # Modal para cadastrar novo paciente
 │   │
 │   ├── patient/
 │   │   ├── PatientLayout.tsx       # Layout do paciente: AppBar + BottomNavigation (mobile)
@@ -244,7 +240,6 @@ src/
 - `ProtectedRoute` — HOC que verifica o token e o role; redireciona para `/login` se inválido.
 - No primeiro login, **pacientes** (`role: client`) com `mustChangePassword: true` são obrigados a trocar a senha via `ChangePasswordModal` antes de acessar qualquer rota. Hoje isso **não é aplicado a nutricionistas**. A flag vem do `localStorage` (o `/auth/me` devolve só o payload do JWT).
 - Regras de senha: troca no primeiro acesso exige 8+ caracteres; redefinição por e-mail aceita 6+ (o backend exige 6+).
-- O checkbox "Lembrar de mim" do login ainda não tem efeito: a sessão sempre usa `localStorage`.
 - Não há tratamento global de `401`/token expirado: a sessão só é revalidada quando uma rota protegida é aberta.
 
 ### Fluxo de Recuperação de Senha
@@ -359,6 +354,6 @@ Para solicitar acesso como nutricionista, entre em contato via WhatsApp:
 - **Ficha do paciente:** ao salvar no `PatientProfileModal`, a avaliação física mais recente é **atualizada** (ou criada, se não houver) e peso/altura são obrigatórios; para registrar uma nova medição no histórico use "Nova Avaliação".
 - **Agenda:** o backend filtra o mês pelo fuso do servidor (UTC), o que pode ocultar consultas noturnas no último dia do mês.
 - **Chat:** a conversa aberta não atualiza sozinha (só o badge faz polling a cada 30 s); falha ao enviar mensagem não exibe erro.
-- **Textos:** mensagens de erro vindas da API (ex.: "Invalid credentials") aparecem em inglês.
+- **Textos:** algumas mensagens de erro da API ainda estão em inglês (ex.: e-mail duplicado, token ausente/expirado).
 - **Segurança:** token no `localStorage`; sem logout automático em `401`.
-- `types/` (gerado pelo Next) está versionado; `AdminDashboard` e `HomeDashboard` são código morto.
+- `types/` (gerado pelo Next) está versionado.
