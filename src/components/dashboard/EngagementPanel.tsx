@@ -18,7 +18,7 @@ import {
 const COLLAPSED_COUNT = 5;
 
 function getInitials(nome: string) {
-  return nome.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
+  return nome.split(" ").filter(Boolean).slice(0, 2).map((n) => n[0]).join("").toUpperCase();
 }
 
 type EngagementPanelProps = {

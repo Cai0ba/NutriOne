@@ -237,7 +237,7 @@ export function PatientDashboard() {
           <>
             {/* ── Stat Cards ── */}
             {hideNumbers ? (
-              <NumbersHiddenNotice compact />
+              <NumbersHiddenNotice compact error={prefs.error} onRetry={prefs.reload} />
             ) : assessments.length > 0 ? (
               <Box
                 sx={{
@@ -289,7 +289,7 @@ export function PatientDashboard() {
             )}
 
             {/* ── Mini charts + Plano ── */}
-            <Box sx={{ display: "grid", gridTemplateColumns: hideNumbers ? { xs: "1fr", md: "360px" } : { xs: "1fr", md: "1fr 1fr 360px" }, gap: 2, mb: 3 }}>
+            <Box sx={{ display: "grid", gridTemplateColumns: hideNumbers ? "1fr" : { xs: "1fr", md: "1fr 1fr 360px" }, gap: 2, mb: 3 }}>
               {/* Peso */}
               {!hideNumbers && (<Paper elevation={0} sx={{ border: "1px solid #e5e7eb", borderRadius: 2, p: 2 }}>
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>

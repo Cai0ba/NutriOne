@@ -7,12 +7,15 @@ import { getSelfProfile, updateSelfPreferences } from "@/lib/patient-self";
  * evolução). O estado é amarrado ao token da sessão: se outra pessoa entrar
  * no mesmo navegador, nada da sessão anterior é reaproveitado.
  *
- * `modoSemNumeros` é `null` enquanto carrega, para a tela não mostrar números
- * por um instante antes de saber a preferência.
+ * `modoSemNumeros` é `null` enquanto carrega ou se o carregamento falhar: nos
+ * dois casos as telas escondem os números. `error` diferencia "falhou" de
+ * "o modo está ligado".
  */
-type State = { token: string | null; value: boolean | null };
+type State = { token: string | null; value: boolean | null; error: boolean };
 
-let state: State = { token: null, value: null };
+const EMPTY: State = { token: null, value: null, error: false };
+
+let state: State = EMPTY;
 let inflight: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 
@@ -23,19 +26,21 @@ function ensureLoaded() {
   if (!token) return;
   if (state.token === token && (state.value !== null || inflight)) return;
 
-  state = { token, value: null };
-  inflight = getSelfProfile(token)
+  state = { token, value: null, error: false };
+  const request: Promise<void> = getSelfProfile(token)
     .then((profile) => {
-      if (state.token === token) state = { token, value: Boolean(profile?.modoSemNumeros) };
+      if (state.token === token) state = { token, value: Boolean(profile?.modoSemNumeros), error: false };
     })
-    // Na dúvida, esconde: errar para o lado de proteger é mais seguro.
+    // Na dúvida, esconde os números e avisa que não foi possível carregar.
     .catch(() => {
-      if (state.token === token) state = { token, value: true };
+      if (state.token === token) state = { token, value: null, error: true };
     })
     .finally(() => {
-      inflight = null;
+      // Só libera se ainda for esta a requisição em andamento (outra sessão pode ter começado a sua).
+      if (inflight === request) inflight = null;
       emit();
     });
+  inflight = request;
 }
 
 const subscribe = (listener: () => void) => {
@@ -45,17 +50,17 @@ const subscribe = (listener: () => void) => {
   };
 };
 
-const getSnapshot = () => (state.token === getStoredToken() ? state.value : null);
-const getServerSnapshot = () => null;
+const getSnapshot = () => (state.token === getStoredToken() ? state : EMPTY);
+const getServerSnapshot = () => EMPTY;
 
 /** Só para testes: limpa o estado compartilhado. */
 export function resetPatientPreferencesStore() {
-  state = { token: null, value: null };
+  state = EMPTY;
   inflight = null;
 }
 
 export function usePatientPreferences() {
-  const modoSemNumeros = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const snapshot = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
   useEffect(() => {
     ensureLoaded();
@@ -65,9 +70,25 @@ export function usePatientPreferences() {
     const token = getStoredToken();
     if (!token) return;
     const result = await updateSelfPreferences(token, value);
-    state = { token, value: result.modoSemNumeros };
+    state = { token, value: result.modoSemNumeros, error: false };
     emit();
   }, []);
 
-  return { modoSemNumeros, loading: modoSemNumeros === null, save };
+  /** Tenta carregar de novo depois de uma falha. */
+  const reload = useCallback(() => {
+    const token = getStoredToken();
+    if (!token) return;
+    state = { token, value: null, error: false };
+    inflight = null;
+    emit();
+    ensureLoaded();
+  }, []);
+
+  return {
+    modoSemNumeros: snapshot.value,
+    loading: snapshot.value === null && !snapshot.error,
+    error: snapshot.error,
+    reload,
+    save,
+  };
 }

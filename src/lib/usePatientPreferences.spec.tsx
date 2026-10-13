@@ -43,11 +43,51 @@ describe('usePatientPreferences', () => {
     await waitFor(() => expect(result.current.modoSemNumeros).toBe(false))
   })
 
-  it('hides numbers when the preference cannot be loaded (fail safe)', async () => {
+  it('reports an error (not "mode on") when the preference cannot be loaded', async () => {
     mockProfile.mockRejectedValue(new Error('offline'))
     const { result } = renderHook(() => usePatientPreferences())
 
-    await waitFor(() => expect(result.current.modoSemNumeros).toBe(true))
+    await waitFor(() => expect(result.current.error).toBe(true))
+    // sem valor conhecido: as telas escondem os números, mas sabem que não é o "modo ligado"
+    expect(result.current.modoSemNumeros).toBeNull()
+    expect(result.current.loading).toBe(false)
+  })
+
+  it('can retry loading after a failure', async () => {
+    mockProfile.mockRejectedValueOnce(new Error('offline'))
+    const { result } = renderHook(() => usePatientPreferences())
+    await waitFor(() => expect(result.current.error).toBe(true))
+
+    mockProfile.mockResolvedValue({ modoSemNumeros: false } as never)
+    act(() => result.current.reload())
+
+    await waitFor(() => expect(result.current.modoSemNumeros).toBe(false))
+    expect(result.current.error).toBe(false)
+  })
+
+  it('does not let a finished request of a previous session clear the current one', async () => {
+    let resolveA: (v: never) => void = () => {}
+    mockProfile.mockReturnValueOnce(new Promise((r) => { resolveA = r as never }))
+    const first = renderHook(() => usePatientPreferences())
+    first.unmount()
+
+    // outra sessão começa a carregar enquanto a primeira ainda responde
+    mockToken.mockReturnValue('token-B')
+    let resolveB: (v: never) => void = () => {}
+    mockProfile.mockReturnValueOnce(new Promise((r) => { resolveB = r as never }))
+    const second = renderHook(() => usePatientPreferences())
+
+    await act(async () => {
+      resolveA({ modoSemNumeros: true } as never)
+    })
+    // a resposta da sessão A não aparece para a B
+    expect(second.result.current.modoSemNumeros).toBeNull()
+
+    await act(async () => {
+      resolveB({ modoSemNumeros: false } as never)
+    })
+    await waitFor(() => expect(second.result.current.modoSemNumeros).toBe(false))
+    expect(mockProfile).toHaveBeenCalledTimes(2)
   })
 
   it('shares one request and one state between components', async () => {

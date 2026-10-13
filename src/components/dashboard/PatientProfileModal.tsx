@@ -593,6 +593,9 @@ export function PatientProfileModal({
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [assessment, setAssessment] = useState<PhysicalAssessment | null>(null);
   const [loading, setLoading] = useState(false);
+  // Se a ficha não carregou, não deixamos salvar: o formulário vazio apagaria dados já gravados
+  // (inclusive o histórico de transtorno alimentar, que controla recursos de jogo).
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // Form: ficha
   const profileForm = useForm<ProfileFormValues>({
@@ -626,6 +629,7 @@ export function PatientProfileModal({
 
     setMode(initialMode);
     setLoading(true);
+    setLoadFailed(false);
 
     const token = getStoredToken();
     if (!token) {
@@ -672,6 +676,10 @@ export function PatientProfileModal({
           observacoesAvaliacao: assessmentData?.observacoes ?? "",
         });
       })
+      .catch(() => {
+        setLoadFailed(true);
+        toast.error("Não foi possível carregar a ficha do paciente. Feche e tente de novo.");
+      })
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, patient]);
@@ -683,7 +691,7 @@ export function PatientProfileModal({
 
   const handleSave = async () => {
     const token = getStoredToken();
-    if (!token || !patient) return;
+    if (!token || !patient || loadFailed) return;
 
     // Dispara validação nos dois forms
     const [profileValid, assessmentValid] = await Promise.all([
@@ -770,6 +778,7 @@ export function PatientProfileModal({
               variant="outlined"
               color="primary"
               startIcon={<Pencil size={14} />}
+              disabled={loading || loadFailed}
               onClick={() => setMode("edit")}
               sx={{
                 borderRadius: 1,

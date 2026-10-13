@@ -55,6 +55,10 @@ export function ConsentGate({ token, userId }: ConsentGateProps) {
   const [pending, setPending] = useState<ConsentStatus[]>([]);
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  // Incrementar força uma nova consulta dos termos (tentar de novo, versão mudou, aba voltou ao foco).
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = () => setReloadKey((k) => k + 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,13 +71,23 @@ export function ConsentGate({ token, userId }: ConsentGateProps) {
           return required || !wasDeclined(userId, c);
         });
         setPending(toAsk);
+        setLoadFailed(false);
       })
-      // Se não der para consultar, não trava o uso: o servidor continua sem registrar o que não foi aceito.
-      .catch(() => {});
+      // Sem conseguir confirmar os termos, não liberamos o app: o usuário pode tentar de novo ou sair.
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      });
     return () => {
       cancelled = true;
     };
-  }, [token, userId]);
+  }, [token, userId, reloadKey]);
+
+  // Outra aba pode ter aceitado os termos: ao voltar o foco, consulta de novo.
+  useEffect(() => {
+    if (pending.length === 0) return;
+    window.addEventListener("focus", reload);
+    return () => window.removeEventListener("focus", reload);
+  }, [pending.length]);
 
   const requiredPending = pending.filter((c) => CONSENT_TEXTS[c.tipo].obrigatorio);
   const canContinue = requiredPending.every((c) => checked[c.tipo]);
@@ -84,10 +98,13 @@ export function ConsentGate({ token, userId }: ConsentGateProps) {
       for (const c of pending) {
         if (checked[c.tipo]) await acceptConsent(token, c.tipo, c.versaoAtual);
         else rememberDeclined(userId, c);
+        // Cada termo já salvo sai da lista: se o próximo falhar, não reenviamos este.
+        setPending((current) => current.filter((p) => p.tipo !== c.tipo));
       }
-      setPending([]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Não foi possível salvar sua resposta.");
+      // A versão do termo pode ter mudado entre abrir e confirmar: busca de novo.
+      reload();
     } finally {
       setSaving(false);
     }
@@ -99,12 +116,18 @@ export function ConsentGate({ token, userId }: ConsentGateProps) {
   };
 
   return (
-    <Dialog open={pending.length > 0} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 2 } } }}>
+    <Dialog open={pending.length > 0 || loadFailed} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 2 } } }}>
       <DialogTitle sx={{ fontWeight: 800 }}>Antes de continuar</DialogTitle>
       <DialogContent>
-        <Typography sx={{ fontSize: 14, color: "#6b7280", mb: 2 }}>
-          Seu nutricionista usa o NutriOne para acompanhar você. Precisamos da sua autorização.
-        </Typography>
+        {loadFailed && pending.length === 0 ? (
+          <Typography sx={{ fontSize: 14, color: "#6b7280" }}>
+            Não foi possível verificar seus termos de uso agora. Verifique sua conexão e tente de novo.
+          </Typography>
+        ) : (
+          <Typography sx={{ fontSize: 14, color: "#6b7280", mb: 2 }}>
+            Seu nutricionista usa o NutriOne para acompanhar você. Precisamos da sua autorização.
+          </Typography>
+        )}
         {pending.map((c) => {
           const t = CONSENT_TEXTS[c.tipo];
           return (
@@ -120,7 +143,7 @@ export function ConsentGate({ token, userId }: ConsentGateProps) {
                 label={
                   <Box>
                     <Typography sx={{ fontWeight: 700, fontSize: 14, color: "#111827" }}>
-                      {t.titulo} {t.obrigatorio ? "" : "(opcional)"}
+                      {t.titulo} {t.obrigatorio ? "(obrigatório)" : "(opcional)"}
                     </Typography>
                     <Typography sx={{ fontSize: 13, color: "#4b5563", mt: 0.25 }}>{t.texto}</Typography>
                   </Box>
@@ -135,14 +158,20 @@ export function ConsentGate({ token, userId }: ConsentGateProps) {
         <Button onClick={handleLogout} color="inherit" sx={{ color: "#6b7280" }}>
           Sair
         </Button>
-        <Button
-          onClick={handleContinue}
-          disabled={!canContinue || saving}
-          variant="contained"
-          sx={{ borderRadius: 1, boxShadow: "none", fontWeight: 700 }}
-        >
-          {saving ? "Salvando..." : "Continuar"}
-        </Button>
+        {loadFailed && pending.length === 0 ? (
+          <Button onClick={reload} variant="contained" sx={{ borderRadius: 1, boxShadow: "none", fontWeight: 700 }}>
+            Tentar de novo
+          </Button>
+        ) : (
+          <Button
+            onClick={handleContinue}
+            disabled={!canContinue || saving}
+            variant="contained"
+            sx={{ borderRadius: 1, boxShadow: "none", fontWeight: 700 }}
+          >
+            {saving ? "Salvando..." : "Continuar"}
+          </Button>
+        )}
       </DialogActions>
     </Dialog>
   );

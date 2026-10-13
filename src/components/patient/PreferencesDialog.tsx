@@ -18,7 +18,7 @@ type PreferencesDialogProps = {
 };
 
 export function PreferencesDialog({ open, onClose }: PreferencesDialogProps) {
-  const { modoSemNumeros, loading, save } = usePatientPreferences();
+  const { modoSemNumeros, loading, error, reload, save } = usePatientPreferences();
   const [saving, setSaving] = useState(false);
 
   const handleToggle = async (value: boolean) => {
@@ -37,6 +37,16 @@ export function PreferencesDialog({ open, onClose }: PreferencesDialogProps) {
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth slotProps={{ paper: { sx: { borderRadius: 2 } } }}>
       <DialogTitle sx={{ fontWeight: 800 }}>Preferências</DialogTitle>
       <DialogContent>
+        {error ? (
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+            <Typography sx={{ fontSize: 14, color: "#6b7280" }}>
+              Não foi possível carregar suas preferências.
+            </Typography>
+            <Button size="small" onClick={reload}>
+              Tentar de novo
+            </Button>
+          </Box>
+        ) : (
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
           <Box>
             <Typography sx={{ fontWeight: 700, color: "#111827" }}>Modo sem números</Typography>
@@ -52,6 +62,7 @@ export function PreferencesDialog({ open, onClose }: PreferencesDialogProps) {
             slotProps={{ input: { "aria-label": "Modo sem números" } }}
           />
         </Box>
+        )}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
         <Button onClick={onClose} color="inherit" sx={{ color: "#6b7280" }}>

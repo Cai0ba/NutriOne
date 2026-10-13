@@ -197,7 +197,7 @@ export function AppointmentDetailModal({ open, appointment, role, onClose, onEdi
                 </Button>
                 <Button
                   onClick={() => handleSetStatus("faltou")}
-                  disabled={updatingStatus}
+                  disabled={updatingStatus || dataHora > new Date()}
                   variant="outlined"
                   sx={{ borderRadius: 1, fontWeight: 700, color: "#92400e", borderColor: "#d97706", "&:hover": { borderColor: "#b45309", bgcolor: "#fffbeb" } }}
                 >

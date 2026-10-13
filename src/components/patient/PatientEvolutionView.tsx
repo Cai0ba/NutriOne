@@ -93,7 +93,7 @@ export function PatientEvolutionView() {
             <CircularProgress color="primary" />
           </Box>
         ) : hideNumbers ? (
-          <NumbersHiddenNotice />
+          <NumbersHiddenNotice error={prefs.error} onRetry={prefs.reload} />
         ) : assessments.length === 0 ? (
           <Paper
             elevation={0}

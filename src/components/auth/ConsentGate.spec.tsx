@@ -152,11 +152,88 @@ describe('ConsentGate', () => {
     expect(mockReplace).toHaveBeenCalledWith('/login')
   })
 
-  it('does not block the app when the consents cannot be loaded', async () => {
-    mockGet.mockRejectedValue(new Error('offline'))
+  describe('when the terms cannot be loaded', () => {
+    it('does not release the app: offers retry and leave', async () => {
+      mockGet.mockRejectedValue(new Error('offline'))
+      render(<ConsentGate token="t" userId="u1" />)
+
+      expect(await screen.findByText(/Não foi possível verificar seus termos/)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Tentar de novo' })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Sair' })).toBeInTheDocument()
+      expect(mockAccept).not.toHaveBeenCalled()
+    })
+
+    it('retries and shows the terms when the second attempt works', async () => {
+      mockGet.mockRejectedValueOnce(new Error('offline'))
+      mockGet.mockResolvedValue({ consents: bothPending })
+      render(<ConsentGate token="t" userId="u1" />)
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Tentar de novo' }))
+
+      expect(await screen.findByText(/Meus dados de saúde/)).toBeInTheDocument()
+      expect(screen.queryByText(/Não foi possível verificar/)).not.toBeInTheDocument()
+    })
+
+    it('closes the retry dialog when the terms turn out to be already accepted', async () => {
+      mockGet.mockRejectedValueOnce(new Error('offline'))
+      mockGet.mockResolvedValue({ consents: [consent('dados_saude', false), consent('monitoramento_atividade', false)] })
+      render(<ConsentGate token="t" userId="u1" />)
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Tentar de novo' }))
+
+      await waitFor(() => expect(screen.queryByText(/Não foi possível verificar/)).not.toBeInTheDocument())
+    })
+  })
+
+  it('does not resend a term that was already saved when a later one fails', async () => {
+    mockGet.mockResolvedValue({ consents: bothPending })
+    mockAccept.mockResolvedValueOnce({ consents: [] })
+    mockAccept.mockRejectedValueOnce(new Error('falhou no segundo'))
+    render(<ConsentGate token="t" userId="u1" />)
+    await screen.findByText('Antes de continuar')
+
+    await userEvent.click(screen.getByRole('checkbox', { name: /Meus dados de saúde/ }))
+    await userEvent.click(screen.getByRole('checkbox', { name: /Acompanhamento do uso do app/ }))
+
+    // o servidor já terá o primeiro aceite quando a tela recarregar os termos
+    mockGet.mockResolvedValue({ consents: [consent('dados_saude', false), consent('monitoramento_atividade')] })
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('falhou no segundo'))
+
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.queryByText(/Meus dados de saúde/)).not.toBeInTheDocument())
+
+    const acceptedTypes = mockAccept.mock.calls.map((c) => c[1])
+    expect(acceptedTypes.filter((t) => t === 'dados_saude')).toHaveLength(1)
+  })
+
+  it('reloads the terms when saving fails (version may have changed)', async () => {
+    mockGet.mockResolvedValue({ consents: bothPending })
+    mockAccept.mockRejectedValueOnce(new Error('A versão do termo está desatualizada.'))
+    render(<ConsentGate token="t" userId="u1" />)
+    await screen.findByText('Antes de continuar')
+
+    await userEvent.click(screen.getByRole('checkbox', { name: /Meus dados de saúde/ }))
+    await userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(2))
+  })
+
+  it('checks again when the window regains focus while the terms are pending', async () => {
+    mockGet.mockResolvedValue({ consents: bothPending })
+    render(<ConsentGate token="t" userId="u1" />)
+    await screen.findByText('Antes de continuar')
+
+    window.dispatchEvent(new Event('focus'))
+
+    await waitFor(() => expect(mockGet).toHaveBeenCalledTimes(2))
+  })
+
+  it('labels each term as required or optional', async () => {
+    mockGet.mockResolvedValue({ consents: bothPending })
     render(<ConsentGate token="t" userId="u1" />)
 
-    await waitFor(() => expect(mockGet).toHaveBeenCalled())
-    expect(screen.queryByText('Antes de continuar')).not.toBeInTheDocument()
+    expect(await screen.findByText(/Meus dados de saúde \(obrigatório\)/)).toBeInTheDocument()
+    expect(screen.getByText(/Acompanhamento do uso do app \(opcional\)/)).toBeInTheDocument()
   })
 })
