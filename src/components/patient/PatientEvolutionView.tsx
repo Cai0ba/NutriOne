@@ -16,6 +16,8 @@ import { MetricLineChart, type ChartDataPoint } from "@/components/charts/Metric
 import { getStoredToken } from "@/lib/auth";
 import type { PhysicalAssessment } from "@/lib/patients";
 import { listSelfAssessments } from "@/lib/patient-self";
+import { usePatientPreferences } from "@/lib/usePatientPreferences";
+import { NumbersHiddenNotice } from "./NumbersHiddenNotice";
 import { PatientLayout } from "./PatientLayout";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -52,6 +54,8 @@ function toChartData(
 export function PatientEvolutionView() {
   const [assessments, setAssessments] = useState<PhysicalAssessment[]>([]);
   const [loading, setLoading]         = useState(true);
+  const prefs = usePatientPreferences();
+  const hideNumbers = prefs.modoSemNumeros !== false; // carregando também esconde
 
   const load = useCallback(async () => {
     const token = getStoredToken();
@@ -84,10 +88,12 @@ export function PatientEvolutionView() {
           </Typography>
         </Box>
 
-        {loading ? (
+        {loading || prefs.loading ? (
           <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
             <CircularProgress color="primary" />
           </Box>
+        ) : hideNumbers ? (
+          <NumbersHiddenNotice error={prefs.error} onRetry={prefs.reload} />
         ) : assessments.length === 0 ? (
           <Paper
             elevation={0}

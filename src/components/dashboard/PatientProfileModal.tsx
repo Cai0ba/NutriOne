@@ -13,6 +13,7 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import InputAdornment from "@mui/material/InputAdornment";
+import MenuItem from "@mui/material/MenuItem";
 import TextField from "@mui/material/TextField";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
@@ -42,6 +43,7 @@ import {
   updateAssessment,
   upsertPatientProfile,
   type PhysicalAssessment,
+  type EatingDisorderHistory,
   type PatientProfile,
 } from "@/lib/patients";
 
@@ -55,8 +57,15 @@ const numStr = z
     "Número inválido.",
   );
 
+const HISTORY_LABELS: Record<EatingDisorderHistory, string> = {
+  nao_informado: "Não informado",
+  sem_historico: "Sem histórico",
+  com_historico: "Com histórico",
+};
+
 const profileSchema = z.object({
   objetivo: z.string().trim().optional(),
+  historicoTranstornoAlimentar: z.enum(["nao_informado", "sem_historico", "com_historico"]),
   peso: numStr,
   altura: numStr,
   telefone: z.string().trim().optional(),
@@ -584,12 +593,16 @@ export function PatientProfileModal({
   const [profile, setProfile] = useState<PatientProfile | null>(null);
   const [assessment, setAssessment] = useState<PhysicalAssessment | null>(null);
   const [loading, setLoading] = useState(false);
+  // Se a ficha não carregou, não deixamos salvar: o formulário vazio apagaria dados já gravados
+  // (inclusive o histórico de transtorno alimentar, que controla recursos de jogo).
+  const [loadFailed, setLoadFailed] = useState(false);
 
   // Form: ficha
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       objetivo: "",
+      historicoTranstornoAlimentar: "nao_informado",
       peso: "",
       altura: "",
       telefone: "",
@@ -616,6 +629,7 @@ export function PatientProfileModal({
 
     setMode(initialMode);
     setLoading(true);
+    setLoadFailed(false);
 
     const token = getStoredToken();
     if (!token) {
@@ -633,6 +647,8 @@ export function PatientProfileModal({
 
         profileForm.reset({
           objetivo: profileData?.objetivo ?? "",
+          historicoTranstornoAlimentar:
+            profileData?.historicoTranstornoAlimentar ?? "nao_informado",
           peso: profileData?.peso != null ? String(profileData.peso) : "",
           altura: profileData?.altura != null ? String(profileData.altura) : "",
           telefone: profileData?.telefone ?? "",
@@ -660,6 +676,10 @@ export function PatientProfileModal({
           observacoesAvaliacao: assessmentData?.observacoes ?? "",
         });
       })
+      .catch(() => {
+        setLoadFailed(true);
+        toast.error("Não foi possível carregar a ficha do paciente. Feche e tente de novo.");
+      })
       .finally(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, patient]);
@@ -671,7 +691,7 @@ export function PatientProfileModal({
 
   const handleSave = async () => {
     const token = getStoredToken();
-    if (!token || !patient) return;
+    if (!token || !patient || loadFailed) return;
 
     // Dispara validação nos dois forms
     const [profileValid, assessmentValid] = await Promise.all([
@@ -688,6 +708,7 @@ export function PatientProfileModal({
       const [savedProfile, savedAssessment] = await Promise.all([
         upsertPatientProfile(token, patient.id, {
           objetivo: pv.objetivo || undefined,
+          historicoTranstornoAlimentar: pv.historicoTranstornoAlimentar,
           peso: toNum(pv.peso),
           altura: toNum(pv.altura),
           telefone: pv.telefone || undefined,
@@ -757,6 +778,7 @@ export function PatientProfileModal({
               variant="outlined"
               color="primary"
               startIcon={<Pencil size={14} />}
+              disabled={loading || loadFailed}
               onClick={() => setMode("edit")}
               sx={{
                 borderRadius: 1,
@@ -820,6 +842,15 @@ export function PatientProfileModal({
                 label="Objetivo"
                 value={profile?.objetivo}
                 icon={<Target size={15} />}
+              />
+              <ReadOnlyField
+                label="Histórico de transtorno alimentar"
+                value={
+                  HISTORY_LABELS[
+                    profile?.historicoTranstornoAlimentar ?? "nao_informado"
+                  ]
+                }
+                icon={<ClipboardList size={15} />}
               />
               <Box
                 sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0 }}
@@ -980,6 +1011,27 @@ export function PatientProfileModal({
                     }}
                     sx={{ mb: 2 }}
                   />
+                )}
+              />
+              <Controller
+                name="historicoTranstornoAlimentar"
+                control={profileForm.control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    select
+                    label="Histórico de transtorno alimentar"
+                    fullWidth
+                    size="small"
+                    helperText="Visível só para você. Recursos de jogo e metas só são liberados ao paciente marcado como “Sem histórico”."
+                    sx={{ mb: 2 }}
+                  >
+                    {(Object.keys(HISTORY_LABELS) as EatingDisorderHistory[]).map((value) => (
+                      <MenuItem key={value} value={value}>
+                        {HISTORY_LABELS[value]}
+                      </MenuItem>
+                    ))}
+                  </TextField>
                 )}
               />
               <Box

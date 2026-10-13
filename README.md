@@ -232,6 +232,14 @@ src/
 
 ---
 
+## Acompanhamento e consentimento
+
+- **Painel "Acompanhamento"** (`/nutritionist/dashboard`): mostra os pacientes que merecem contato, com nível de risco (urgente, acompanhar, em dia) e os motivos, vindos de `GET /engagement/patients`. Atalhos: mensagem (`/nutritionist/messages?patientId=…`), agendar retorno e evolução. Os limites das regras ficam no back (`engagement.rules.ts`).
+- **Agenda:** novo status `faltou`; o detalhe da consulta tem "Marcar realizada" e "Faltou" para dar baixa. O nutricionista só cancela consultas agendadas.
+- **Ficha do paciente:** campo "Histórico de transtorno alimentar" (só o nutricionista vê; controla recursos de jogo futuros).
+- **Consentimento do paciente** (`ConsentGate`, dentro do `ProtectedRoute`): pede o termo de dados de saúde (obrigatório) e o de acompanhamento do uso do app (opcional) via `/me/consents`. **Os textos em `consentTexts.ts` são rascunho** e precisam de revisão jurídica antes de abrir para mais pacientes. A recusa do termo opcional é lembrada por aparelho (`localStorage`); ainda não há tela para revogar.
+- **Modo sem números** (Preferências, ícone de engrenagem no layout do paciente): esconde peso, IMC, gordura e gráficos no início e na evolução. Estado compartilhado em `usePatientPreferences` (amarrado ao token da sessão; enquanto carrega ou se falhar, esconde).
+
 ## Autenticação e Sessão
 
 - O token JWT e os dados do usuário são armazenados no **`localStorage`** com as chaves `nutriconnect.accessToken` e `nutriconnect.user`.

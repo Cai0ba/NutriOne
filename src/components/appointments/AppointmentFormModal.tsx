@@ -31,7 +31,7 @@ const schema = z.object({
   hora:        z.string().min(1, "Informe o horário."),
   duracao:     z.number().min(15).max(240),
   observacoes: z.string().optional(),
-  status:      z.enum(["agendado", "realizado", "cancelado"]).optional(),
+  status:      z.enum(["agendado", "realizado", "cancelado", "faltou"]).optional(),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -50,13 +50,15 @@ type Props = {
   open:            boolean;
   appointment?:    Appointment | null; // null = criar
   defaultDate?:    Date | null;
+  /** Paciente já selecionado ao criar (ex.: atalho do painel de acompanhamento). */
+  defaultPatientId?: string;
   onClose:         () => void;
   onSaved:         (appt: Appointment) => void;
 };
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
-export function AppointmentFormModal({ open, appointment, defaultDate, onClose, onSaved }: Props) {
+export function AppointmentFormModal({ open, appointment, defaultDate, defaultPatientId, onClose, onSaved }: Props) {
   const isEdit = Boolean(appointment);
   const [patients, setPatients] = useState<Patient[]>([]);
 
@@ -99,7 +101,7 @@ export function AppointmentFormModal({ open, appointment, defaultDate, onClose, 
       });
     } else {
       reset({
-        patientId:   "",
+        patientId:   defaultPatientId ?? "",
         tipo:        "consulta",
         data:        toLocalDateString(defaultDate ?? new Date()),
         hora:        "09:00",
@@ -108,7 +110,7 @@ export function AppointmentFormModal({ open, appointment, defaultDate, onClose, 
         status:      "agendado",
       });
     }
-  }, [open, appointment, defaultDate, reset]);
+  }, [open, appointment, defaultDate, defaultPatientId, reset]);
 
   const onSubmit = async (values: FormValues) => {
     const token = getStoredToken();
@@ -204,6 +206,7 @@ export function AppointmentFormModal({ open, appointment, defaultDate, onClose, 
                       <MenuItem value="agendado">Agendado</MenuItem>
                       <MenuItem value="realizado">Realizado</MenuItem>
                       <MenuItem value="cancelado">Cancelado</MenuItem>
+                      <MenuItem value="faltou">Faltou</MenuItem>
                     </Select>
                   </FormControl>
                 )}

@@ -15,6 +15,7 @@ import {
   type AuthMeResponse,
 } from "@/lib/auth";
 import { ChangePasswordModal } from "./ChangePasswordModal";
+import { ConsentGate } from "./ConsentGate";
 
 type ProtectedRouteProps = {
   children: (session: AuthMeResponse) => ReactNode;
@@ -107,6 +108,9 @@ export function ProtectedRoute({
   return (
     <>
       {children(session)}
+      {token && session.role === "client" && !mustChangePassword ? (
+        <ConsentGate token={token} userId={session.sub} />
+      ) : null}
       {token ? (
         <ChangePasswordModal
           open={mustChangePassword}

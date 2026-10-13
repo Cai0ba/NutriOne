@@ -25,6 +25,7 @@ function MonthStats({ appointments }: { appointments: Appointment[] }) {
   const agendados = appointments.filter((a) => a.status === "agendado").length;
   const realizados= appointments.filter((a) => a.status === "realizado").length;
   const cancelados= appointments.filter((a) => a.status === "cancelado").length;
+  const faltas    = appointments.filter((a) => a.status === "faltou").length;
 
   const stat = (label: string, value: number, color: string) => (
     <Box key={label} sx={{ textAlign: "center", flex: 1 }}>
@@ -40,6 +41,7 @@ function MonthStats({ appointments }: { appointments: Appointment[] }) {
         {stat("Agendadas", agendados, "#1e40af")}
         {stat("Realizadas", realizados, "#065f46")}
         {stat("Canceladas", cancelados, "#991b1b")}
+        {stat("Faltas", faltas, "#92400e")}
       </Box>
     </Paper>
   );
@@ -176,6 +178,7 @@ export function NutritionistCalendarPage() {
         onClose={() => setDetailOpen(false)}
         onEdit={(appt) => { setEditTarget(appt); setFormOpen(true); setDetailOpen(false); }}
         onCancelled={handleCancelled}
+        onStatusChanged={handleCancelled}
       />
     </DashboardLayout>
   );

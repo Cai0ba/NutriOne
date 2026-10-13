@@ -17,6 +17,11 @@ jest.mock('@/lib/auth', () => ({
   getDashboardPathByRole: jest.fn((role: string) => role === 'nutritionist' ? '/nutritionist/dashboard' : '/home'),
 }))
 
+// Mock ConsentGate (faz chamadas de rede próprias)
+jest.mock('./ConsentGate', () => ({
+  ConsentGate: () => null,
+}))
+
 // Mock ChangePasswordModal (heavy component)
 jest.mock('./ChangePasswordModal', () => ({
   ChangePasswordModal: () => null,
