@@ -5,8 +5,6 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Card from "@mui/material/Card";
-import Checkbox from "@mui/material/Checkbox";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import InputAdornment from "@mui/material/InputAdornment";
 import Link from "@mui/material/Link";
 import Tab from "@mui/material/Tab";
@@ -29,7 +27,6 @@ import {
 const loginSchema = z.object({
   email: z.string().trim().email("Informe um email válido."),
   senha: z.string().min(1, "Informe sua senha."),
-  rememberMe: z.boolean(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -75,7 +72,6 @@ export function LoginForm() {
     defaultValues: {
       email: "",
       senha: "",
-      rememberMe: true,
     },
   });
 
@@ -230,36 +226,11 @@ export function LoginForm() {
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
+            justifyContent: "flex-end",
             gap: 2,
             my: 1.25,
           }}
         >
-          <Controller
-            name="rememberMe"
-            control={control}
-            render={({ field }) => (
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={field.value}
-                    onChange={(event) => field.onChange(event.target.checked)}
-                    color="primary"
-                    size="small"
-                  />
-                }
-                label="Lembrar de mim"
-                sx={{
-                  mr: 0,
-                  "& .MuiFormControlLabel-label": {
-                    color: "text.secondary",
-                    fontSize: 14,
-                  },
-                }}
-              />
-            )}
-          />
-
           <Link
             component="button"
             type="button"

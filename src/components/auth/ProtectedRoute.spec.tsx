@@ -41,11 +41,11 @@ describe('ProtectedRoute', () => {
         {() => <div>Dashboard</div>}
       </ProtectedRoute>,
     )
-    expect(screen.getByText(/Validating/i)).toBeInTheDocument()
+    expect(screen.getByText(/Validando sessão/i)).toBeInTheDocument()
     expect(screen.queryByText('Dashboard')).not.toBeInTheDocument()
   })
 
-  it('redirects to "/" when no token stored', async () => {
+  it('redirects to "/login" when no token stored', async () => {
     const mockReplace = jest.fn()
     mockUseRouter.mockReturnValue({ replace: mockReplace, push: jest.fn() } as any)
     mockGetStoredToken.mockReturnValue(null)
@@ -56,7 +56,7 @@ describe('ProtectedRoute', () => {
       </ProtectedRoute>,
     )
 
-    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/'))
+    await waitFor(() => expect(mockReplace).toHaveBeenCalledWith('/login'))
     expect(screen.queryByText('Dashboard')).not.toBeInTheDocument()
   })
 
@@ -101,7 +101,7 @@ describe('ProtectedRoute', () => {
 
     await waitFor(() => {
       expect(mockClearSession).toHaveBeenCalled()
-      expect(mockReplace).toHaveBeenCalledWith('/')
+      expect(mockReplace).toHaveBeenCalledWith('/login')
     })
   })
 
