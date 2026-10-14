@@ -49,6 +49,17 @@ describe('ChangePasswordModal', () => {
     })
   })
 
+  describe('acessibilidade', () => {
+    it('is named by its title and uses the right autocomplete hints', () => {
+      render(<ChangePasswordModal open token="t" onPasswordChanged={jest.fn()} />)
+
+      expect(screen.getByRole('dialog', { name: 'Troque sua senha' })).toBeInTheDocument()
+      expect(screen.getByLabelText('Senha temporária')).toHaveAttribute('autocomplete', 'current-password')
+      expect(screen.getByLabelText('Nova senha')).toHaveAttribute('autocomplete', 'new-password')
+      expect(screen.getByLabelText('Confirmar nova senha')).toHaveAttribute('autocomplete', 'new-password')
+    })
+  })
+
   describe('voluntário', () => {
     it('shows "Senha atual" and a cancel button that closes', async () => {
       const onClose = jest.fn()
@@ -58,6 +69,17 @@ describe('ChangePasswordModal', () => {
       expect(screen.getByLabelText('Senha atual')).toBeInTheDocument()
       await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
       expect(onClose).toHaveBeenCalled()
+    })
+
+    it('clears what was typed when cancelling', async () => {
+      render(<ChangePasswordModal open forced={false} token="t" onClose={jest.fn()} onPasswordChanged={jest.fn()} />)
+
+      await userEvent.type(screen.getByLabelText('Senha atual'), 'segredo-atual')
+      await userEvent.type(screen.getByLabelText('Nova senha'), 'segredo-novo-1')
+      await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+      expect(screen.getByLabelText('Senha atual')).toHaveValue('')
+      expect(screen.getByLabelText('Nova senha')).toHaveValue('')
     })
   })
 

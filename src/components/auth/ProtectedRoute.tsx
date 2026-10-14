@@ -108,7 +108,15 @@ export function ProtectedRoute({
 
   return (
     <>
-      {children(session)}
+      {/*
+        Com a troca de senha pendente a API bloqueia tudo (403): não montamos as telas
+        até a troca, para que elas busquem os dados já com o token novo.
+      */}
+      {mustChangePassword ? (
+        <Box sx={{ minHeight: "100vh", bgcolor: "#f0fdf4" }} />
+      ) : (
+        children(session)
+      )}
       {token && session.role === "client" && !mustChangePassword ? (
         <ConsentGate token={token} userId={session.sub} />
       ) : null}
@@ -116,6 +124,8 @@ export function ProtectedRoute({
         <ChangePasswordModal
           open={mustChangePassword}
           token={token}
+          // Acoplado à API: a senha temporária do paciente é fixa (TEMPORARY_PASSWORD no back).
+          // Se ela deixar de ser fixa, remover este prefill.
           prefillCurrentPassword={session.role === "client" ? "trocar1234" : ""}
           onPasswordChanged={(user, accessToken) => {
             updateStoredUser(user);
@@ -129,6 +139,7 @@ export function ProtectedRoute({
                     role: user.role,
                     email: user.email,
                     mustChangePassword: user.mustChangePassword,
+                    mcp: false,
                   }
                 : currentSession,
             );

@@ -205,5 +205,26 @@ describe('ProtectedRoute', () => {
       expect(screen.queryByText('change-password-modal')).not.toBeInTheDocument()
       expect(await screen.findByText('consent-gate:new-token')).toBeInTheDocument()
     })
+
+    it('does not mount the pages while the change is pending (they would call the API with the blocked token)', async () => {
+      mockGetCurrentUser.mockResolvedValue({ sub: 'p1', email: 'p@x.com', role: 'client', mcp: true })
+
+      render(<ProtectedRoute>{() => <div>Pagina</div>}</ProtectedRoute>)
+
+      await screen.findByText('change-password-modal')
+      expect(screen.queryByText('Pagina')).not.toBeInTheDocument()
+    })
+
+    it('mounts the pages only after the change, already with the new token available', async () => {
+      mockGetCurrentUser.mockResolvedValue({ sub: 'p1', email: 'p@x.com', role: 'client', mcp: true })
+      render(<ProtectedRoute>{() => <div>Pagina</div>}</ProtectedRoute>)
+      await screen.findByText('change-password-modal')
+
+      act(() => {
+        mockModalProps?.onPasswordChanged({ id: 'p1', mustChangePassword: false, role: 'client' }, 'new-token')
+      })
+
+      expect(await screen.findByText('Pagina')).toBeInTheDocument()
+    })
   })
 })

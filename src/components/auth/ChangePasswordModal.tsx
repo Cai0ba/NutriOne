@@ -78,6 +78,13 @@ export function ChangePasswordModal({
     },
   });
 
+  const handleCancel = () => {
+    // Não deixa senhas digitadas no formulário ao cancelar.
+    reset({ senhaAtual: prefillCurrentPassword, novaSenha: "", confirmarSenha: "" });
+    setFormError(null);
+    onClose?.();
+  };
+
   const onSubmit = async (values: ChangePasswordValues) => {
     setFormError(null);
 
@@ -104,13 +111,14 @@ export function ChangePasswordModal({
   return (
     <Dialog
       open={open}
-      onClose={forced ? undefined : onClose}
+      onClose={forced ? undefined : handleCancel}
       maxWidth="xs"
       fullWidth
       slotProps={{
         backdrop: {
           sx: { backdropFilter: "blur(2px)" },
         },
+        paper: { "aria-labelledby": "change-password-title" },
       }}
     >
       <DialogTitle sx={{ pb: 0, pt: 3, px: 3 }}>
@@ -130,7 +138,7 @@ export function ChangePasswordModal({
             <KeyRound size={21} />
           </Box>
           <Box>
-            <Typography sx={{ color: "#111827", fontSize: 20, fontWeight: 850 }}>
+            <Typography id="change-password-title" sx={{ color: "#111827", fontSize: 20, fontWeight: 850 }}>
               {forced ? "Troque sua senha" : "Alterar senha"}
             </Typography>
             <Typography sx={{ color: "#6b7280", fontSize: 14 }}>
@@ -158,6 +166,7 @@ export function ChangePasswordModal({
                 {...field}
                 label={forced ? "Senha temporária" : "Senha atual"}
                 type="password"
+                autoComplete="current-password"
                 fullWidth
                 error={Boolean(errors.senhaAtual)}
                 helperText={errors.senhaAtual?.message}
@@ -183,6 +192,7 @@ export function ChangePasswordModal({
                 {...field}
                 label="Nova senha"
                 type="password"
+                autoComplete="new-password"
                 fullWidth
                 error={Boolean(errors.novaSenha)}
                 helperText={errors.novaSenha?.message}
@@ -199,6 +209,7 @@ export function ChangePasswordModal({
                 {...field}
                 label="Confirmar nova senha"
                 type="password"
+                autoComplete="new-password"
                 fullWidth
                 error={Boolean(errors.confirmarSenha)}
                 helperText={errors.confirmarSenha?.message}
@@ -223,7 +234,7 @@ export function ChangePasswordModal({
               type="button"
               fullWidth
               color="inherit"
-              onClick={onClose}
+              onClick={handleCancel}
               disabled={isSubmitting}
               sx={{ mt: 1, color: "#6b7280" }}
             >
