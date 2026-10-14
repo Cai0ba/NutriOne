@@ -16,21 +16,26 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import {
   changePassword,
+  updateStoredToken,
   updateStoredUser,
   type AuthUser,
 } from "@/lib/auth";
 
 const changePasswordSchema = z
   .object({
-    senhaAtual: z.string().min(1, "Informe sua senha temporaria."),
+    senhaAtual: z.string().min(1, "Informe sua senha atual."),
     novaSenha: z
       .string()
       .min(8, "A nova senha precisa ter pelo menos 8 caracteres."),
     confirmarSenha: z.string().min(1, "Confirme sua nova senha."),
   })
   .refine((values) => values.novaSenha === values.confirmarSenha, {
-    message: "As senhas nao conferem.",
+    message: "As senhas não conferem.",
     path: ["confirmarSenha"],
+  })
+  .refine((values) => values.novaSenha !== values.senhaAtual, {
+    message: "A nova senha deve ser diferente da atual.",
+    path: ["novaSenha"],
   });
 
 type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
@@ -38,23 +43,36 @@ type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
 type ChangePasswordModalProps = {
   open: boolean;
   token: string;
-  onPasswordChanged: (user: AuthUser) => void;
+  /** Recebe o usuário atualizado e o token novo (já salvo no navegador). */
+  onPasswordChanged: (user: AuthUser, accessToken: string) => void;
+  /**
+   * `true` (padrão): troca obrigatória da senha temporária, sem como fechar.
+   * `false`: troca voluntária, com botão para cancelar.
+   */
+  forced?: boolean;
+  onClose?: () => void;
+  /** Preenche a senha atual (usado para a senha temporária enviada por e-mail ao paciente). */
+  prefillCurrentPassword?: string;
 };
 
 export function ChangePasswordModal({
   open,
   token,
   onPasswordChanged,
+  forced = true,
+  onClose,
+  prefillCurrentPassword = "",
 }: ChangePasswordModalProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const {
     control,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ChangePasswordValues>({
     resolver: zodResolver(changePasswordSchema),
     defaultValues: {
-      senhaAtual: "trocar1234",
+      senhaAtual: prefillCurrentPassword,
       novaSenha: "",
       confirmarSenha: "",
     },
@@ -69,8 +87,11 @@ export function ChangePasswordModal({
         novaSenha: values.novaSenha,
       });
 
+      // A API devolve um token novo: o antigo continua bloqueado até a troca.
+      updateStoredToken(response.accessToken);
       updateStoredUser(response.user);
-      onPasswordChanged(response.user);
+      reset({ senhaAtual: prefillCurrentPassword, novaSenha: "", confirmarSenha: "" });
+      onPasswordChanged(response.user, response.accessToken);
     } catch (error) {
       setFormError(
         error instanceof Error
@@ -83,6 +104,7 @@ export function ChangePasswordModal({
   return (
     <Dialog
       open={open}
+      onClose={forced ? undefined : onClose}
       maxWidth="xs"
       fullWidth
       slotProps={{
@@ -109,10 +131,12 @@ export function ChangePasswordModal({
           </Box>
           <Box>
             <Typography sx={{ color: "#111827", fontSize: 20, fontWeight: 850 }}>
-              Troque sua senha
+              {forced ? "Troque sua senha" : "Alterar senha"}
             </Typography>
             <Typography sx={{ color: "#6b7280", fontSize: 14 }}>
-              A senha temporaria precisa ser substituida.
+              {forced
+                ? "A senha temporária precisa ser substituída."
+                : "Informe a senha atual e escolha uma nova."}
             </Typography>
           </Box>
         </Box>
@@ -132,7 +156,7 @@ export function ChangePasswordModal({
             render={({ field }) => (
               <TextField
                 {...field}
-                label="Senha temporaria"
+                label={forced ? "Senha temporária" : "Senha atual"}
                 type="password"
                 fullWidth
                 error={Boolean(errors.senhaAtual)}
@@ -193,6 +217,19 @@ export function ChangePasswordModal({
           >
             {isSubmitting ? "Salvando..." : "Salvar nova senha"}
           </Button>
+
+          {!forced && (
+            <Button
+              type="button"
+              fullWidth
+              color="inherit"
+              onClick={onClose}
+              disabled={isSubmitting}
+              sx={{ mt: 1, color: "#6b7280" }}
+            >
+              Cancelar
+            </Button>
+          )}
         </Box>
       </DialogContent>
     </Dialog>

@@ -59,12 +59,13 @@ export function ProtectedRoute({
 
         if (isMounted) {
           setSession(currentUser);
+          // Vale para qualquer perfil. A API marca o token (mcp); o usuário salvo cobre tokens antigos.
           setMustChangePassword(
-            currentUser.role === "client" &&
-              Boolean(
+            Boolean(
+              currentUser.mcp ??
                 currentUser.mustChangePassword ??
-                  storedUser?.mustChangePassword,
-              ),
+                storedUser?.mustChangePassword,
+            ),
           );
         }
       } catch {
@@ -115,8 +116,11 @@ export function ProtectedRoute({
         <ChangePasswordModal
           open={mustChangePassword}
           token={token}
-          onPasswordChanged={(user) => {
+          prefillCurrentPassword={session.role === "client" ? "trocar1234" : ""}
+          onPasswordChanged={(user, accessToken) => {
             updateStoredUser(user);
+            // O token antigo segue bloqueado pela API: tudo passa a usar o novo.
+            setToken(accessToken);
             setMustChangePassword(false);
             setSession((currentSession) =>
               currentSession

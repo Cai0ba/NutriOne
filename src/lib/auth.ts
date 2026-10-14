@@ -27,6 +27,8 @@ export type AuthMeResponse = {
   email: string;
   role: UserRole;
   mustChangePassword?: boolean;
+  /** A API marca o token com isto enquanto a senha temporária não foi trocada. */
+  mcp?: boolean;
 };
 
 export type RegisterUserPayload = {
@@ -48,6 +50,8 @@ export type ChangePasswordPayload = {
 
 export type ChangePasswordResponse = {
   user: AuthUser;
+  /** Token novo, já sem a pendência de troca de senha. */
+  accessToken: string;
 };
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
@@ -149,6 +153,14 @@ export function saveSession(response: LoginResponse) {
 
   localStorage.setItem(TOKEN_KEY, response.accessToken);
   localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+}
+
+export function updateStoredToken(token: string) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  localStorage.setItem(TOKEN_KEY, token);
 }
 
 export function getStoredToken() {

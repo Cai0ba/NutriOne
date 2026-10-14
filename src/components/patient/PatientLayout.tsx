@@ -13,11 +13,12 @@ import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { BarChart3, CalendarDays, Leaf, LogOut, MessageCircle, Salad, Settings, type LucideIcon } from "lucide-react";
+import { BarChart3, CalendarDays, KeyRound, Leaf, LogOut, MessageCircle, Salad, Settings, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { clearSession, getStoredUser } from "@/lib/auth";
+import { AccountPasswordDialog } from "@/components/auth/AccountPasswordDialog";
 import { useUnreadMessages } from "@/lib/useUnreadMessages";
 import { PreferencesDialog } from "./PreferencesDialog";
 
@@ -89,6 +90,7 @@ export function PatientLayout({ children }: { children: ReactNode }) {
   const unread   = useUnreadMessages("client");
   const isMobile = useMediaQuery("(max-width:899px)");
   const [prefsOpen, setPrefsOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   const initials = (user?.nome ?? "P")
     .split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase();
@@ -148,6 +150,11 @@ export function PatientLayout({ children }: { children: ReactNode }) {
                 <Settings size={16} />
               </IconButton>
             </Tooltip>
+            <Tooltip title="Alterar senha">
+              <IconButton size="small" aria-label="Alterar senha" onClick={() => setPasswordOpen(true)} sx={{ color: "#9ca3af" }}>
+                <KeyRound size={16} />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Sair">
               <IconButton size="small" onClick={handleLogout} sx={{ color: "#9ca3af" }}>
                 <LogOut size={16} />
@@ -205,6 +212,11 @@ export function PatientLayout({ children }: { children: ReactNode }) {
                 <Settings size={18} />
               </IconButton>
             </Tooltip>
+            <Tooltip title="Alterar senha">
+              <IconButton size="small" aria-label="Alterar senha" onClick={() => setPasswordOpen(true)} sx={{ color: "#9ca3af" }}>
+                <KeyRound size={18} />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Sair">
               <IconButton size="small" onClick={handleLogout} sx={{ color: "#9ca3af" }}>
                 <LogOut size={18} />
@@ -215,6 +227,7 @@ export function PatientLayout({ children }: { children: ReactNode }) {
       </AppBar>
 
       <PreferencesDialog open={prefsOpen} onClose={() => setPrefsOpen(false)} />
+      <AccountPasswordDialog open={passwordOpen} onClose={() => setPasswordOpen(false)} />
 
       {/* ── Conteúdo principal ──────────────────────────────────────────────── */}
       <Box
