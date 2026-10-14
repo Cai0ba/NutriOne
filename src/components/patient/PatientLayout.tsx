@@ -13,12 +13,13 @@ import Toolbar from "@mui/material/Toolbar";
 import Tooltip from "@mui/material/Tooltip";
 import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
-import { BarChart3, CalendarDays, KeyRound, Leaf, LogOut, MessageCircle, Salad, Settings, type LucideIcon } from "lucide-react";
+import { BarChart3, CalendarDays, Leaf, LogOut, MessageCircle, Salad, Settings, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { clearSession, getStoredUser } from "@/lib/auth";
 import { AccountPasswordDialog } from "@/components/auth/AccountPasswordDialog";
+import { UserMenu } from "@/components/common/UserMenu";
 import { useUnreadMessages } from "@/lib/useUnreadMessages";
 import { PreferencesDialog } from "./PreferencesDialog";
 
@@ -150,11 +151,6 @@ export function PatientLayout({ children }: { children: ReactNode }) {
                 <Settings size={16} />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Alterar senha">
-              <IconButton size="small" aria-label="Alterar senha" onClick={() => setPasswordOpen(true)} sx={{ color: "#9ca3af" }}>
-                <KeyRound size={16} />
-              </IconButton>
-            </Tooltip>
             <Tooltip title="Sair">
               <IconButton size="small" onClick={handleLogout} sx={{ color: "#9ca3af" }}>
                 <LogOut size={16} />
@@ -178,12 +174,7 @@ export function PatientLayout({ children }: { children: ReactNode }) {
         }}
       >
         <Toolbar sx={{ minHeight: "72px !important", px: { md: 4 }, display: "flex", justifyContent: "flex-end" }}>
-          <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
-            <Avatar sx={{ width: 40, height: 40, bgcolor: "#d1fae5", color: "primary.dark", fontSize: 14, fontWeight: 800 }}>
-              {initials}
-            </Avatar>
-            <Typography sx={{ color: "#374151", fontSize: 15, fontWeight: 700 }}>{user?.nome ?? "Paciente"}</Typography>
-          </Stack>
+          <UserMenu initials={initials} name={user?.nome ?? "Paciente"} onChangePassword={() => setPasswordOpen(true)} />
         </Toolbar>
       </AppBar>
 
@@ -204,17 +195,10 @@ export function PatientLayout({ children }: { children: ReactNode }) {
             <Typography sx={{ fontSize: 19, fontWeight: 800, color: "#111827" }}>NutriOne</Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Avatar sx={{ width: 34, height: 34, bgcolor: "#d1fae5", color: "primary.dark", fontSize: 13, fontWeight: 800 }}>
-              {initials}
-            </Avatar>
+            <UserMenu compact initials={initials} name={user?.nome ?? "Paciente"} onChangePassword={() => setPasswordOpen(true)} />
             <Tooltip title="Preferências">
               <IconButton size="small" onClick={() => setPrefsOpen(true)} sx={{ color: "#9ca3af" }}>
                 <Settings size={18} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Alterar senha">
-              <IconButton size="small" aria-label="Alterar senha" onClick={() => setPasswordOpen(true)} sx={{ color: "#9ca3af" }}>
-                <KeyRound size={18} />
               </IconButton>
             </Tooltip>
             <Tooltip title="Sair">

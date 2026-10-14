@@ -15,7 +15,6 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import {
   CalendarDays,
-  KeyRound,
   Leaf,
   LogOut,
   MessageCircle,
@@ -27,6 +26,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { clearSession, getStoredUser } from "@/lib/auth";
 import { AccountPasswordDialog } from "@/components/auth/AccountPasswordDialog";
+import { UserMenu } from "@/components/common/UserMenu";
 import { useUnreadMessages } from "@/lib/useUnreadMessages";
 
 const DRAWER_WIDTH = 240;
@@ -150,11 +150,6 @@ export function DashboardLayout({ children, userName }: DashboardLayoutProps) {
               <Typography noWrap sx={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{displayName}</Typography>
               <Typography sx={{ fontSize: 12, color: "#9ca3af" }}>Nutricionista</Typography>
             </Box>
-            <Tooltip title="Alterar senha">
-              <IconButton size="small" aria-label="Alterar senha" onClick={() => setPasswordOpen(true)} sx={{ color: "#9ca3af" }}>
-                <KeyRound size={16} />
-              </IconButton>
-            </Tooltip>
             <Tooltip title="Sair">
               <IconButton size="small" onClick={handleLogout} sx={{ color: "#9ca3af" }}>
                 <LogOut size={16} />
@@ -178,12 +173,7 @@ export function DashboardLayout({ children, userName }: DashboardLayoutProps) {
         }}
       >
         <Toolbar sx={{ minHeight: "72px !important", px: { md: 4 }, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-          <Stack direction="row" spacing={1.25} sx={{ alignItems: "center" }}>
-            <Avatar sx={{ width: 40, height: 40, bgcolor: "#d1fae5", color: "primary.dark", fontSize: 14, fontWeight: 800 }}>
-              {initials}
-            </Avatar>
-            <Typography sx={{ color: "#374151", fontSize: 15, fontWeight: 700 }}>{displayName}</Typography>
-          </Stack>
+          <UserMenu initials={initials} name={displayName} onChangePassword={() => setPasswordOpen(true)} />
         </Toolbar>
       </AppBar>
 
@@ -204,14 +194,7 @@ export function DashboardLayout({ children, userName }: DashboardLayoutProps) {
             <Typography sx={{ fontSize: 19, fontWeight: 800, color: "#111827" }}>NutriOne</Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Avatar sx={{ width: 34, height: 34, bgcolor: "#d1fae5", color: "primary.dark", fontSize: 13, fontWeight: 800 }}>
-              {initials}
-            </Avatar>
-            <Tooltip title="Alterar senha">
-              <IconButton size="small" aria-label="Alterar senha" onClick={() => setPasswordOpen(true)} sx={{ color: "#9ca3af" }}>
-                <KeyRound size={18} />
-              </IconButton>
-            </Tooltip>
+            <UserMenu compact initials={initials} name={displayName} onChangePassword={() => setPasswordOpen(true)} />
             <Tooltip title="Sair">
               <IconButton size="small" onClick={handleLogout} sx={{ color: "#9ca3af" }}>
                 <LogOut size={18} />
