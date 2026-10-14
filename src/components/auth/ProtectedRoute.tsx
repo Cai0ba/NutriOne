@@ -59,12 +59,13 @@ export function ProtectedRoute({
 
         if (isMounted) {
           setSession(currentUser);
+          // Vale para qualquer perfil. A API marca o token (mcp); o usuário salvo cobre tokens antigos.
           setMustChangePassword(
-            currentUser.role === "client" &&
-              Boolean(
+            Boolean(
+              currentUser.mcp ??
                 currentUser.mustChangePassword ??
-                  storedUser?.mustChangePassword,
-              ),
+                storedUser?.mustChangePassword,
+            ),
           );
         }
       } catch {
@@ -107,7 +108,15 @@ export function ProtectedRoute({
 
   return (
     <>
-      {children(session)}
+      {/*
+        Com a troca de senha pendente a API bloqueia tudo (403): não montamos as telas
+        até a troca, para que elas busquem os dados já com o token novo.
+      */}
+      {mustChangePassword ? (
+        <Box sx={{ minHeight: "100vh", bgcolor: "#f0fdf4" }} />
+      ) : (
+        children(session)
+      )}
       {token && session.role === "client" && !mustChangePassword ? (
         <ConsentGate token={token} userId={session.sub} />
       ) : null}
@@ -115,8 +124,13 @@ export function ProtectedRoute({
         <ChangePasswordModal
           open={mustChangePassword}
           token={token}
-          onPasswordChanged={(user) => {
+          // Acoplado à API: a senha temporária do paciente é fixa (TEMPORARY_PASSWORD no back).
+          // Se ela deixar de ser fixa, remover este prefill.
+          prefillCurrentPassword={session.role === "client" ? "trocar1234" : ""}
+          onPasswordChanged={(user, accessToken) => {
             updateStoredUser(user);
+            // O token antigo segue bloqueado pela API: tudo passa a usar o novo.
+            setToken(accessToken);
             setMustChangePassword(false);
             setSession((currentSession) =>
               currentSession
@@ -125,6 +139,7 @@ export function ProtectedRoute({
                     role: user.role,
                     email: user.email,
                     mustChangePassword: user.mustChangePassword,
+                    mcp: false,
                   }
                 : currentSession,
             );

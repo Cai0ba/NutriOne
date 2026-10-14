@@ -7,6 +7,7 @@ import {
   getStoredToken,
   getStoredUser,
   updateStoredUser,
+  updateStoredToken,
   clearSession,
   getMyPatients,
   getDashboardPathByRole,
@@ -139,10 +140,11 @@ describe('registerUser', () => {
 describe('changePassword', () => {
   it('calls /auth/change-password', async () => {
     const user: AuthUser = { id: '1', nome: 'Ana', email: 'ana@test.com', role: 'nutritionist' }
-    mockOk({ user })
+    mockOk({ user, accessToken: 'new-token' })
 
     const result = await changePassword('tok', { senhaAtual: 'old', novaSenha: 'new' })
     expect(result.user).toEqual(user)
+    expect(result.accessToken).toBe('new-token')
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/auth/change-password'),
       expect.objectContaining({ method: 'POST' }),
@@ -203,6 +205,14 @@ describe('updateStoredUser', () => {
     const user: AuthUser = { id: '1', nome: 'Ana', email: 'ana@test.com', role: 'nutritionist' }
     updateStoredUser(user)
     expect(localStorageMock.setItem).toHaveBeenCalledWith('nutriconnect.user', JSON.stringify(user))
+  })
+})
+
+describe('updateStoredToken', () => {
+  it('replaces only the token, keeping the stored user', () => {
+    updateStoredToken('fresh-token')
+    expect(localStorageMock.setItem).toHaveBeenCalledWith('nutriconnect.accessToken', 'fresh-token')
+    expect(localStorageMock.setItem).toHaveBeenCalledTimes(1)
   })
 })
 

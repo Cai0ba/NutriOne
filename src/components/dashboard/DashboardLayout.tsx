@@ -15,6 +15,7 @@ import Typography from "@mui/material/Typography";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import {
   CalendarDays,
+  KeyRound,
   Leaf,
   LogOut,
   MessageCircle,
@@ -23,8 +24,9 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { clearSession, getStoredUser } from "@/lib/auth";
+import { AccountPasswordDialog } from "@/components/auth/AccountPasswordDialog";
 import { useUnreadMessages } from "@/lib/useUnreadMessages";
 
 const DRAWER_WIDTH = 240;
@@ -92,6 +94,7 @@ export function DashboardLayout({ children, userName }: DashboardLayoutProps) {
   const user      = getStoredUser();
   const unread    = useUnreadMessages("nutritionist");
   const isMobile  = useMediaQuery("(max-width:899px)");
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   const displayName = userName ?? user?.nome?.split(" ")[0] ?? "Nutricionista";
   const initials    = (user?.nome ?? "N")
@@ -147,6 +150,11 @@ export function DashboardLayout({ children, userName }: DashboardLayoutProps) {
               <Typography noWrap sx={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>{displayName}</Typography>
               <Typography sx={{ fontSize: 12, color: "#9ca3af" }}>Nutricionista</Typography>
             </Box>
+            <Tooltip title="Alterar senha">
+              <IconButton size="small" aria-label="Alterar senha" onClick={() => setPasswordOpen(true)} sx={{ color: "#9ca3af" }}>
+                <KeyRound size={16} />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Sair">
               <IconButton size="small" onClick={handleLogout} sx={{ color: "#9ca3af" }}>
                 <LogOut size={16} />
@@ -199,6 +207,11 @@ export function DashboardLayout({ children, userName }: DashboardLayoutProps) {
             <Avatar sx={{ width: 34, height: 34, bgcolor: "#d1fae5", color: "primary.dark", fontSize: 13, fontWeight: 800 }}>
               {initials}
             </Avatar>
+            <Tooltip title="Alterar senha">
+              <IconButton size="small" aria-label="Alterar senha" onClick={() => setPasswordOpen(true)} sx={{ color: "#9ca3af" }}>
+                <KeyRound size={18} />
+              </IconButton>
+            </Tooltip>
             <Tooltip title="Sair">
               <IconButton size="small" onClick={handleLogout} sx={{ color: "#9ca3af" }}>
                 <LogOut size={18} />
@@ -207,6 +220,8 @@ export function DashboardLayout({ children, userName }: DashboardLayoutProps) {
           </Box>
         </Toolbar>
       </AppBar>
+
+      <AccountPasswordDialog open={passwordOpen} onClose={() => setPasswordOpen(false)} />
 
       {/* ── Conteúdo principal ──────────────────────────────────────────────── */}
       <Box

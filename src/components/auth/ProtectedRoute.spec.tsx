@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import { ProtectedRoute } from './ProtectedRoute'
 
 // Mock next/navigation
@@ -17,17 +17,27 @@ jest.mock('@/lib/auth', () => ({
   getDashboardPathByRole: jest.fn((role: string) => role === 'nutritionist' ? '/nutritionist/dashboard' : '/home'),
 }))
 
-// Mock ConsentGate (faz chamadas de rede próprias)
+// Mock ConsentGate (faz chamadas de rede próprias): expõe o token recebido
 jest.mock('./ConsentGate', () => ({
-  ConsentGate: () => null,
+  ConsentGate: ({ token }: { token: string }) => <div>consent-gate:{token}</div>,
 }))
 
-// Mock ChangePasswordModal (heavy component)
+// Mock ChangePasswordModal: expõe as props para os testes
+type ModalProps = {
+  open: boolean
+  forced?: boolean
+  prefillCurrentPassword?: string
+  onPasswordChanged: (user: unknown, accessToken: string) => void
+}
+let mockModalProps: ModalProps | null = null
 jest.mock('./ChangePasswordModal', () => ({
-  ChangePasswordModal: () => null,
+  ChangePasswordModal: (props: ModalProps) => {
+    mockModalProps = props
+    return props.open ? <div>change-password-modal</div> : null
+  },
 }))
 
-import { getStoredToken, getCurrentUser, clearSession } from '@/lib/auth'
+import { getStoredToken, getStoredUser, getCurrentUser, clearSession } from '@/lib/auth'
 import { useRouter } from 'next/navigation'
 
 const mockGetStoredToken  = getStoredToken  as jest.MockedFunction<typeof getStoredToken>
@@ -121,5 +131,100 @@ describe('ProtectedRoute', () => {
     )
 
     await waitFor(() => expect(screen.getByText('Open Content')).toBeInTheDocument())
+  })
+
+  describe('troca de senha obrigatória', () => {
+    beforeEach(() => {
+      mockModalProps = null
+      mockGetStoredToken.mockReturnValue('old-token')
+    })
+
+    it('forces the password change for a nutritionist with a pending temporary password', async () => {
+      mockGetCurrentUser.mockResolvedValue({ sub: 'n1', email: 'n@x.com', role: 'nutritionist', mcp: true })
+
+      render(<ProtectedRoute allowedRoles={['nutritionist']}>{() => <div>Dashboard</div>}</ProtectedRoute>)
+
+      expect(await screen.findByText('change-password-modal')).toBeInTheDocument()
+      expect(mockModalProps?.forced).not.toBe(false)
+    })
+
+    it('forces the password change for a patient and prefills the temporary password', async () => {
+      mockGetCurrentUser.mockResolvedValue({ sub: 'p1', email: 'p@x.com', role: 'client', mcp: true })
+
+      render(<ProtectedRoute>{() => <div>Home</div>}</ProtectedRoute>)
+
+      expect(await screen.findByText('change-password-modal')).toBeInTheDocument()
+      expect(mockModalProps?.prefillCurrentPassword).toBe('trocar1234')
+    })
+
+    it('does not prefill anything for a nutritionist', async () => {
+      mockGetCurrentUser.mockResolvedValue({ sub: 'n1', email: 'n@x.com', role: 'nutritionist', mcp: true })
+
+      render(<ProtectedRoute>{() => <div>Dashboard</div>}</ProtectedRoute>)
+
+      await screen.findByText('change-password-modal')
+      expect(mockModalProps?.prefillCurrentPassword).toBe('')
+    })
+
+    it('does not show the modal when nothing is pending', async () => {
+      mockGetCurrentUser.mockResolvedValue({ sub: 'n1', email: 'n@x.com', role: 'nutritionist' })
+
+      render(<ProtectedRoute>{() => <div>Dashboard</div>}</ProtectedRoute>)
+
+      await screen.findByText('Dashboard')
+      expect(screen.queryByText('change-password-modal')).not.toBeInTheDocument()
+    })
+
+    it('trusts the stored user for old tokens that carry no flag', async () => {
+      mockGetCurrentUser.mockResolvedValue({ sub: 'n1', email: 'n@x.com', role: 'nutritionist' })
+      ;(getStoredUser as jest.Mock).mockReturnValue({ id: 'n1', mustChangePassword: true })
+
+      render(<ProtectedRoute>{() => <div>Dashboard</div>}</ProtectedRoute>)
+
+      expect(await screen.findByText('change-password-modal')).toBeInTheDocument()
+    })
+
+    it('does not ask for consent while the password change is pending', async () => {
+      mockGetCurrentUser.mockResolvedValue({ sub: 'p1', email: 'p@x.com', role: 'client', mcp: true })
+
+      render(<ProtectedRoute>{() => <div>Home</div>}</ProtectedRoute>)
+
+      await screen.findByText('change-password-modal')
+      expect(screen.queryByText(/consent-gate/)).not.toBeInTheDocument()
+    })
+
+    it('switches everything to the new token after the change (the old one stays blocked)', async () => {
+      mockGetCurrentUser.mockResolvedValue({ sub: 'p1', email: 'p@x.com', role: 'client', mcp: true })
+      render(<ProtectedRoute>{() => <div>Home</div>}</ProtectedRoute>)
+      await screen.findByText('change-password-modal')
+
+      act(() => {
+        mockModalProps?.onPasswordChanged({ id: 'p1', mustChangePassword: false, role: 'client' }, 'new-token')
+      })
+
+      expect(screen.queryByText('change-password-modal')).not.toBeInTheDocument()
+      expect(await screen.findByText('consent-gate:new-token')).toBeInTheDocument()
+    })
+
+    it('does not mount the pages while the change is pending (they would call the API with the blocked token)', async () => {
+      mockGetCurrentUser.mockResolvedValue({ sub: 'p1', email: 'p@x.com', role: 'client', mcp: true })
+
+      render(<ProtectedRoute>{() => <div>Pagina</div>}</ProtectedRoute>)
+
+      await screen.findByText('change-password-modal')
+      expect(screen.queryByText('Pagina')).not.toBeInTheDocument()
+    })
+
+    it('mounts the pages only after the change, already with the new token available', async () => {
+      mockGetCurrentUser.mockResolvedValue({ sub: 'p1', email: 'p@x.com', role: 'client', mcp: true })
+      render(<ProtectedRoute>{() => <div>Pagina</div>}</ProtectedRoute>)
+      await screen.findByText('change-password-modal')
+
+      act(() => {
+        mockModalProps?.onPasswordChanged({ id: 'p1', mustChangePassword: false, role: 'client' }, 'new-token')
+      })
+
+      expect(await screen.findByText('Pagina')).toBeInTheDocument()
+    })
   })
 })
